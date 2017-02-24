@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.6/handlebars.min.js"></script>
+    <script src="lib/fronty.js"></script>
+    
+    <script>
+      $( ()=> { //wait for document ready
+        class Counter extends Model {
+          constructor() {
+            super('counter');
+            this.counter = 0;
+          }
+          
+          increase() {
+            this.set( () => { this.counter++ });
+          }
+        }
+
+        class CounterComponent extends Component {
+          constructor(counterModel, node) {
+            super(Handlebars.templates.counter, counterModel, node);
+            this.counterModel = counterModel;
+            
+            this.addEventListener('click', '#increase', () => {
+              //update the model
+              this.counterModel.increase();
+            });
+          }
+        }
+        
+        var myModel = new Counter();
+        
+        Handlebars.templates = {};
+        Handlebars.templates.counter = Handlebars.compile('<span>Current counter: {{counter}}</span><button id="increase">Increase</button>');
+        
+        var myComponent = new CounterComponent(myModel, 'myapp');
+        
+        myComponent.start();
+      });
+    </script>
+    
+  </head>
+  
+    
+  <body>
+    <div id ="myapp">Loading</div>
+  </body>
+    
+</html>
