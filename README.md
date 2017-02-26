@@ -1,8 +1,6 @@
 # fronty.js
 
-
-A simple library for building Component-based Web user interfaces, based on
-[Handlebars](http://handlebarsjs.com/) and [JQuery](https://jquery.com)
+A simple library for building Component-based Web user interfaces.
 
 **Note: This is an educational project (around 500 lines of code). There are
 many libraries doing this for professional projects (e.g:
@@ -25,26 +23,29 @@ myModel.counter = 0;
 myModel.set( () => myModel.counter++ );
 ```
 
-### Templates
-Templates allows you to maintain your HTML separated from your JavaScript code.
-Templates are Handlebars templates. For example:
+### Renderers
+Renderers allows you to maintain your HTML separated from your JavaScript code.
+A renderer is a function that takes a model and converts it into HTML. A very
+powerful library to create this function is
+[Handlebars](http://handlebarsjs.com/), sinde a Handlebars template is a valid
+renderer function for fronty.js. For example:
 
 ```html
 <span>Current counter: {{counter}}</span>
 ```
 
-This template would be able to render the previous model, where `counter` is
+This renderer would be able to render the previous model, where `counter` is
 a property of the model.
 
 ### Components
 Components are responsible of rendering your models into HTML by using a
-template and, more important, to update your HTML when your model
+renderer function and, more important, to update your HTML when your model
 changes (implementing "one-way binding"), by making as less changes as possible
 in the HTML document in order to increase performance.
 
-Components receive a compiled Handlebars template as a parameter and are placed
-inside a node of your HTML document, so everything inside that node is
-responsibility of the component.
+Components receive a renderer function (e.g: a Handlebars template) as a
+parameter and are placed inside a node of your HTML document, so everything
+inside that node is responsibility of the component.
 
 ```javascript
 var myModel = new Model('mymodel');
@@ -173,7 +174,10 @@ The `template/counter-template.hbs` would be:
 ```
 
 ## Object oriented
-Models and Components are [classes](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Classes) (ECMAScript 2015). It is recommended that you build your own Models and Components by extending this clases.
+Models and Components are
+[classes](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Classes)
+(ECMAScript 2015). It is recommended that you build your own Models and
+Components by extending this clases.
 
 For example:
 
