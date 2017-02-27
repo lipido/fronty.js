@@ -1,6 +1,6 @@
 class ChildComponent extends Component {
   constructor(model, id) {
-    super(Handlebars.compile('{{value}}'), model, id);
+    super(Handlebars.compile('<div id="'+id+'">{{value}}</div>'), model, id);
   }
 }
 
@@ -58,11 +58,11 @@ describe('Component', () => {
 
     model.items = [item1, item2];
 
-    var parent = new ListComponent(Handlebars.compile('{{#each items}}<div id="child-{{id}}" class="achild"></div>{{/each}}'), model, model.items, (item) => {
+    var parent = new ListComponent(Handlebars.compile('<div id="componentId">{{#each items}}<div id="child-{{id}}"></div>{{/each}}</div>'), model, model.items, (item) => {
         return 'child-' + item.id;
       },
       (item) => {
-        return new Component(Handlebars.compile('{{name}}'), item, 'child-' + item.id)
+        return new Component(Handlebars.compile('<div id="child-{{id}}" class="achild">{{name}}</div>'), item, 'child-' + item.id)
       }, 'componentId');
 
 
@@ -84,13 +84,13 @@ describe('Component', () => {
 
     var parent = new ListComponent(
       Handlebars.compile(
-        '{{#each items}}<div key="item-{{id}}" id="child-{{id}}" class="achild"></div>{{/each}}'),
+        '<div id="componentId">{{#each items}}<div key="item-{{id}}" id="child-{{id}}"></div>{{/each}}</div>'),
       model, model.items,
       (item) => { //id provider
         return 'child-' + item.id;
       },
       (item) => { // component factory
-        return new Component(Handlebars.compile('{{name}}'), item, 'child-' + item.id)
+        return new Component(Handlebars.compile('<div key="item-{{id}}" id="child-{{id}}" class="achild">{{name}}</div>'), item, 'child-' + item.id)
       }, 'componentId');
 
 
@@ -115,14 +115,14 @@ describe('Component', () => {
     model.items = [childModel];
 
     var parent = new Component(
-      Handlebars.compile('{{#each items}}<ChildComponent id="child-{{@index}}" model="items[{{@index}}]"></ChildComponent>{{/each}}'),
+      Handlebars.compile('<div id="componentId">{{#each items}}<ChildComponent id="child-{{@index}}" model="items[{{@index}}]"></ChildComponent>{{/each}}</div>'),
       model,
       'componentId', ['ChildComponent'] //tags that generate childs
     );
 
     parent.createChildComponent = (tagName, model, id) => {
       if (tagName === 'ChildComponent') {
-        return new Component(Handlebars.compile('{{value}}'), model, id);
+        return new Component(Handlebars.compile('<div id="'+id+'">{{value}}</div>'), model, id);
       }
     };
 
@@ -135,7 +135,25 @@ describe('Component', () => {
     });
 
     expect(parent.getChildComponents().length).toBe(0);
+    
+    
+    model.set(() => {
+      var childModel = new Model();
+      childModel.value='foo';
+      model.items.push(childModel);
+    });
+    
+    
+    expect(parent.getChildComponents().length).toBe(1);
+    model.set(() => {
+      var childModel = new Model();
+      childModel.value='foo';
+      model.items.push(childModel);
+    });
+    expect(parent.getChildComponents().length).toBe(2);
   });
+  
+  
 
   it('should autodetect child component classes on child tags', () => {
     var model = new Model();
@@ -149,13 +167,14 @@ describe('Component', () => {
 
     //ChildComponent class is defined in global scope (see start of this file)
     var parent = new Component(
-      Handlebars.compile('{{#each items}}<ChildComponent id="child-{{@index}}" model="items[{{@index}}]"></ChildComponent>{{/each}}'),
+      Handlebars.compile('<div id="componentId">{{#each items}}<ChildComponent id="child-{{@index}}" model="items[{{@index}}]"></ChildComponent>{{/each}}</div>'),
       model,
       'componentId', ['ChildComponent'] //tags that generate childs
     );
 
     parent.start();
     expect(document.getElementById('child-0').innerHTML).toBe('foo');
+    console.log('---------> '+document.getElementById('fixture').innerHTML);
     expect(document.getElementById('child-1').innerHTML).toBe('bar');
     expect(parent.getChildComponents().length).toBe(2);
 

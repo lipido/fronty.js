@@ -27,9 +27,9 @@ describe('RouterComponent', () => {
   });
 
   it('should render a default route', () => {
-    var router = new RouterComponent('router', Handlebars.compile('<div id="currentpage"></div>'), 'currentpage', []);
+    var router = new RouterComponent('router', Handlebars.compile('<div id="router"><div id="currentpage"></div></div>'), 'currentpage', []);
     
-    var page = new Component(Handlebars.compile('Page1'), null, null);
+    var page = new Component(Handlebars.compile('<div id="currentpage">Page1</div>'), null, null);
     
     router.setRouterConfig({
       page: {
@@ -46,10 +46,10 @@ describe('RouterComponent', () => {
   it('should change the route', () => {
 
     
-    var router = new RouterComponent('router', Handlebars.compile('<div id="currentpage"></div>'), 'currentpage', []);
+    var router = new RouterComponent('router', Handlebars.compile('<div id="router"><div id="currentpage"></div></div>'), 'currentpage', []);
     
-    var page = new Component(Handlebars.compile('Page1'), null, null);
-    var page2 = new Component(Handlebars.compile('Page2'), null, null);
+    var page = new Component(Handlebars.compile('<div id="currentpage">Page1</div>'), null, null);
+    var page2 = new Component(Handlebars.compile('<div id="currentpage">Page2</div>'), null, null);
     
     router.setRouterConfig({
       page: {

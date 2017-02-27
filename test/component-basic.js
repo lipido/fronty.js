@@ -20,7 +20,14 @@ describe('Component', () => {
     expect(document.getElementById('greetings')).not.toBe(null);
 
   });
+  it('should trim templates', () => {
+    var component = new Component(Handlebars.compile(' <p id="greetings">Hello World</p> '), [], 'componentId');
 
+    component.start();
+
+    expect(document.getElementById('greetings')).not.toBe(null);
+
+  });
   it('should render a single model value', () => {
     var model = new Model();
     model.value = 'foo';
@@ -32,34 +39,47 @@ describe('Component', () => {
     expect(document.getElementById('greetings').innerHTML).toBe('foo');
 
   });
-
-  it('should update a single model value', () => {
+  
+  it('should allow to not indicate the id in the root elem of the template', () => {
     var model = new Model();
     model.value = 'foo';
-    var component = new Component(Handlebars.compile('<p id="greetings">{{value}}</p>'), model, 'componentId');
+    var component = new Component(Handlebars.compile('<div><p id="greetings">{{value}}</p></div>'), model, 'componentId');
 
     component.start();
     model.set(() => model.value = 'bar');
 
+    expect(document.getElementById('greetings').innerHTML).toBe('bar');
+    expect(document.getElementById('componentId')).not.toBe(null);
+
+  });
+
+  it('should update a single model value', () => {
+    var model = new Model();
+    model.value = 'foo';
+    var component = new Component(Handlebars.compile('<div><p id="greetings">{{value}}</p></div>'), model, 'componentId');
+
+    component.start();
+    model.set(() => model.value = 'bar');
 
     expect(document.getElementById('greetings').innerHTML).toBe('bar');
 
 
   });
+
   
   it('should remove nodes after update', () => {
     var model = new Model();
     model.value = 'true';
     
-    var component = new Component(Handlebars.compile('<div id="greetings">{{#if value}}hi!{{/if}}</div>'), model, 'componentId');
+    var component = new Component(Handlebars.compile('<div id="componentId">{{#if value}}hi!{{/if}}</div>'), model, 'componentId');
 
     component.start();
     
-    expect(document.getElementById('greetings').childNodes.length).toBe(1);
+    expect(document.getElementById('componentId').childNodes.length).toBe(1);
 
     model.set(()=> model.value = false);
     
-    expect(document.getElementById('greetings').childNodes.length).toBe(0);
+    expect(document.getElementById('componentId').childNodes.length).toBe(0);
 
 
   });
@@ -73,7 +93,7 @@ describe('Component', () => {
     }, {
       item: 'item-4'
     }];
-    var component = new Component(Handlebars.compile('{{#each items}} <p key="{{item}}" class="item">{{item}}</p> {{/each}}'), model, 'componentId');
+    var component = new Component(Handlebars.compile('<div id="componentId">{{#each items}} <p key="{{item}}" class="item">{{item}}</p> {{/each}}</div>'), model, 'componentId');
 
     component.start();
 
@@ -102,7 +122,7 @@ describe('Component', () => {
     model.items = [{
       item: 'foo'
     }];
-    var component = new Component(Handlebars.compile('<p id="donottouch">Do not touch</p>{{#each items}}<p class="item">{{item}}</p>{{/each}}'), model, 'componentId');
+    var component = new Component(Handlebars.compile('<div id="componentId"><p id="donottouch">Do not touch</p>{{#each items}}<p class="item">{{item}}</p>{{/each}}</div>'), model, 'componentId');
 
     component.start();
 
@@ -131,11 +151,11 @@ describe('Component', () => {
     }, {
       item: 'item-4'
     }];
-    var component = new Component(Handlebars.compile('{{#each items}}<p key="{{item}}" class="item">{{item}}</p>{{/each}}'), model, 'componentId');
+    var component = new Component(Handlebars.compile('<div id="componentId">{{#each items}}<p key="{{item}}" class="item">{{item}}</p>{{/each}}</div>'), model, 'componentId');
 
     component.start();
-
     var item4Node = document.getElementsByClassName('item')[2]; //item-4
+    expect(item4Node).not.toBe(undefined);
 
     model.set(() => model.items = [{
       item: 'item-1'
@@ -146,13 +166,14 @@ describe('Component', () => {
     }, {
       item: 'item-4'
     }]);
-
+    
+    console.log(document.getElementById('fixture').innerHTML);
     // do not touch
     expect(document.getElementsByClassName('item')[3]).toBe(item4Node);
 
   });
   
-  it('should not touch unaffected childrens when removing the first position in a key-based list of nodes', () => {
+  it('should not touch unaffected children when removing the first position in a key-based list of nodes', () => {
     var model = new Model();
     model.items = [{
       item: 'item-1'
