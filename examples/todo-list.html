@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.6/handlebars.min.js"></script>
+  <script src="../lib/fronty.js"></script>
+  
+  <!-- templates -->
+  <script id="todo-list-template" type="text/x-handlebars-template">
+    <div>
+    <ul class="list-group">
+      {{#each items}}
+      <todoitemcomponent id="item-{{id}}" model="items[{{@index}}]"></todoitemcomponent>
+      {{/each}}
+    </ul>
+    <div>
+        Add item: <input class="form-control" id="itemname" type="text"></input><button type="button" id="addbutton" class="btn btn-success">Add</button>
+    </div>
+  </div>
+  </script>
+  
+  <script id="todo-item" type="text/x-handlebars-template">
+    <li class="{{#if done}}disabled {{/if}}list-group-item">
+      {{description}}
+      
+      {{#if done}}
+      <button class="reopenbutton btn btn-default" type="button">reopen</button></span>
+      {{else}}
+      <button class="donebutton btn btn-default" type="button">done</button> {{/if}}
+      
+      <button class="removebutton btn btn-default" type="button">remove</button>
+      
+    </li>
+  </script>
+  
+  <script>
+    // Model
+    class TodoList extends Model {
+      constructor() {
+        super('todolist-model');
+        this.items = [];
+      }
+
+      addItem(item) {
+        this.items.unshift(item);
+      }
+    }
+
+    
+    class TodoItem extends Model {
+      constructor(description, done, list) {
+        super(description);
+        this.id = TodoItem.autoincrement++;
+        this.description = description;
+        this.done = done;
+        this.list = list;
+      }
+
+      done() {
+        this.done = true;
+      }
+
+      reopen() {
+        this.done = false;
+      }
+      
+      
+
+    }
+    TodoItem.autoincrement = 0;
+    
+    // Components
+    class TodoListComponent extends Component {
+      constructor(items, id) {
+        super(Handlebars.compile(document.getElementById('todo-list-template').innerHTML), items, id, ['TodoItemComponent']);
+        this.addEventListener('click', '#addbutton', () => {
+          items.set(() => {
+            items.addItem(new TodoItem($('#itemname').val(), false, items));
+          });
+
+        });
+      }
+    }
+
+    class TodoItemComponent extends Component {
+      constructor(item, id) {
+
+        super(Handlebars.compile(document.getElementById('todo-item').innerHTML), item, id);
+        this.item = item;
+
+        this.addEventListener('click', '.donebutton', () => {
+          this.item.set(() => {
+            this.item.done = true
+          });
+        });
+        this.addEventListener('click', '.reopenbutton', () => {
+          this.item.set(() => {
+            this.item.done = false
+          });
+        });
+        
+        this.addEventListener('click', '.removebutton', () => {
+          var todoList = this.item.list;
+          todoList.set( () => {
+            todoList.items.splice(todoList.items.indexOf(this.item), 1);
+          });
+          
+        });
+      }
+
+    }
+
+    $(() => {
+      var todos = new TodoList();
+
+      new TodoListComponent(todos, 'todo-list-app').start();
+      todos.set(() => {
+        todos.addItem(new TodoItem('lunch', false, todos));
+        todos.addItem(new TodoItem('dinner', false, todos));
+      });
+    });
+  </script>
+</head>
+
+<body>
+  <h1>Todo list with <a href="https://github.com/lipido/fronty.js">fronty.js</a></h1>
+
+  <div id="todo-list-app">Loading</div>
+
+</body>
+
+</html>
