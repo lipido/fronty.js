@@ -2,7 +2,7 @@
 
 A simple library for building Component-based Web user interfaces.
 
-**Note: This is an educational project (around 500 lines of code). There are
+**Note: This is an educational project (<1000 lines of code). There are
 many libraries doing this for professional projects (e.g:
 [Ember](http://emberjs.com), [AngularJS](http://angularjs.org),
 [Vue.js](https://vuejs.org), [React](https://facebook.github.io/react/), etc.)**
@@ -27,15 +27,18 @@ myModel.set( () => myModel.counter++ );
 Renderers allows you to maintain your HTML separated from your JavaScript code.
 A renderer is a function that takes a model and converts it into HTML. A very
 powerful library to create this function is
-[Handlebars](http://handlebarsjs.com/), sinde a Handlebars template is a valid
+[Handlebars](http://handlebarsjs.com/), since a Handlebars template is a valid
 renderer function for fronty.js. For example:
 
 ```html
-<span>Current counter: {{counter}}</span>
+<div><span>Current counter: {{counter}}</span><button id="increase">Increase</button></div>
 ```
 
-This renderer would be able to render the previous model, where `counter` is
-a property of the model.
+If you compile this template with Handlebars, you get a valid renderer function
+that would be able to render the previous model, where `counter` is a property
+of the model.
+
+Note: renderers **MUST** return a piece of HTML with a single root element.
 
 ### Components
 Components are responsible of rendering your models into HTML by using a
@@ -43,14 +46,16 @@ renderer function and, more important, to update your HTML when your model
 changes (implementing "one-way binding"), by making as less changes as possible
 in the HTML document in order to increase performance.
 
-Components receive a renderer function (e.g: a Handlebars template) as a
-parameter and are placed inside a node of your HTML document, so everything
+Components receive a renderer function (e.g: a compiled Handlebars template) as
+a parameter and are placed inside a node of your HTML document, so everything
 inside that node is responsibility of the component.
 
 ```javascript
 var myModel = new Model('mymodel');
 myModel.counter = 0;
-var aTemplate = Handlebars.compile('<span>Current counter: {{counter}}</span><button id="increase">Increase</button>');
+var aTemplate = Handlebars.compile(
+  '<div><span>Current counter: {{counter}}</span><button id="increase">Increase</button></div>'
+);
 var myComponent = new Component(aTemplate, myModel, 'myapp');
 ```
 
@@ -65,9 +70,6 @@ myComponent.addEventListener('click', '#increase', () => {
   myModel.set( () => myModel.counter++ );
 });
 ```
-
-Components can also be composed one inside other, for better modularity and
-reusability `component.addChildComponent(childComponent)`.
 
 Finally, components do not render until you call `start()`.
 
@@ -101,7 +103,9 @@ Here you have a single page with a minimal code to see fronty.js working.
         myModel.counter = 0;
         
         // Template
-        var aTemplate = Handlebars.compile('<span>Current counter: {{counter}}</span><button id="increase">Increase</button>');
+        var aTemplate = Handlebars.compile(
+          '<div><span>Current counter: {{counter}}</span><button id="increase">Increase</button></div>'
+        );
         
         // Component
         var myComponent = new Component(aTemplate, myModel, 'myapp');
@@ -172,7 +176,6 @@ The `template/counter-template.hbs` would be:
 ```html
 <span>Current counter: {{counter}}</span><button id="increase">Increase</button>
 ```
-
 ## Object oriented
 Models and Components are
 [classes](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Classes)
@@ -205,3 +208,85 @@ class CounterComponent extends Component {
   }
 }
 ```
+
+## Nesting Components
+Components can also be composed one inside other for better modularity,
+reusability and performance by using
+`component.addChildComponent(childComponent)`. You can also place a special tag
+in parent components to create child components dynamically. For example:
+
+```html
+<!-- parent template -->
+<ul>
+  {{#each items}}
+  <todoitemcomponent id="item-{{id}}" key="item-{{id}}" model="items[{{@index}}]"></todoitemcomponent>
+  {{/each}}
+</ul>
+```
+
+```html
+<!-- child template -->
+<li key="item-{{id}}">
+  {{description}}
+</li>
+```
+
+```javascript
+
+// parent component
+class TodoListComponent extends Component {
+  constructor(items, id) {
+    super(
+      Handlebars.compile(document.getElementById('todo-list-template').innerHTML),
+      items, id, 
+      ['TodoItemComponent']); // <--- tags that create child components
+  
+  }
+}
+
+// child items component
+class TodoItemComponent extends Component {
+  constructor(item, id) { // <--- a component class with this constructor must be available
+  }
+}
+```
+
+In the parent component, you have to indicate that the `<todoitemcomponent>` tag
+is a tag that should create child components dynamically, and pass them the
+model that the expression found in the attribute `model` evaluates to. Once the 
+child component are created, these tags are replaced.
+
+If you want to instantiate the child components by hand, you can override the
+`createChildComponent(childTag, modelItem, itemId)` function in the parent
+component. For example:
+
+```javascript
+class TodoListComponent extends Component {
+  constructor(items, id) {
+    super(
+      Handlebars.compile(document.getElementById('todo-list-template').innerHTML),
+      items, id, 
+      ['TodoItemComponent']); // <--- tags that create child components
+  
+  }
+  createChildComponent(childTag, modelItem, itemId) {
+    if (childTag === 'TodoItemComponent') {
+      return new TodoItemComponent(modelItem, itemId);
+    }
+  }
+}
+```
+
+See an example in [here](examples/todo-list.html).
+
+## Technical details
+- One-way binding.
+- Component-based. Each part of the DOM is managed by a component. Components
+  are nestable.
+- No third-party libraries required.
+- Template engine agnostic. Tested with [Handlebars](http://handlebarsjs.com/).
+- Updates the DOM by Virtual DOM diff+patch (or "Reconciliation" as in
+  [React](https://facebook.github.io/react/)).
+- Models are mutable and observed by components. Only components that observe a
+  changing model are re-rendered, so you can control which part of the DOM is
+  re-evaluated for changes.
