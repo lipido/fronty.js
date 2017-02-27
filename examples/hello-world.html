@@ -34,7 +34,7 @@
         var myModel = new Counter();
         
         Handlebars.templates = {};
-        Handlebars.templates.counter = Handlebars.compile('<span>Current counter: {{counter}}</span><button id="increase">Increase</button>');
+        Handlebars.templates.counter = Handlebars.compile('<div><span>Current counter: {{counter}}</span><button id="increase">Increase</button></div>');
         
         var myComponent = new CounterComponent(myModel, 'myapp');
         
