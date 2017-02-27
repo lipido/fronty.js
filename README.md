@@ -180,7 +180,7 @@ The `template/counter-template.hbs` would be:
 Models and Components are
 [classes](https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Classes)
 (ECMAScript 2015). It is recommended that you build your own Models and
-Components by extending this clases.
+Components by extending these classes.
 
 For example:
 
