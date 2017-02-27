@@ -15,7 +15,7 @@
     <div>
     <ul class="list-group">
       {{#each items}}
-      <todoitemcomponent id="item-{{id}}" model="items[{{@index}}]"></todoitemcomponent>
+      <todoitemcomponent id="item-{{id}}" key="item-{{id}}" model="items[{{@index}}]"></todoitemcomponent>
       {{/each}}
     </ul>
     <div>
@@ -25,7 +25,7 @@
   </script>
   
   <script id="todo-item" type="text/x-handlebars-template">
-    <li class="{{#if done}}disabled {{/if}}list-group-item">
+    <li class="{{#if done}}disabled {{/if}}list-group-item" key="item-{{id}}">
       {{description}}
       
       {{#if done}}
