@@ -174,7 +174,6 @@ describe('Component', () => {
 
     parent.start();
     expect(document.getElementById('child-0').innerHTML).toBe('foo');
-    console.log('---------> '+document.getElementById('fixture').innerHTML);
     expect(document.getElementById('child-1').innerHTML).toBe('bar');
     expect(parent.getChildComponents().length).toBe(2);
 

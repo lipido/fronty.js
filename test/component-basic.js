@@ -167,7 +167,6 @@ describe('Component', () => {
       item: 'item-4'
     }]);
     
-    console.log(document.getElementById('fixture').innerHTML);
     // do not touch
     expect(document.getElementsByClassName('item')[3]).toBe(item4Node);
 
