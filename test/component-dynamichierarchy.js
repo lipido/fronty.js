@@ -1,3 +1,9 @@
+class ChildComponent extends Component {
+  constructor(model, id) {
+    super(Handlebars.compile('{{value}}'), model, id);
+  }
+}
+
 describe('Component', () => {
   beforeEach(() => {
     var fixture = '<div id="fixture"><div id="componentId"></div></div>';
@@ -28,7 +34,7 @@ describe('Component', () => {
           super.addChildComponent(this.subitemChildComponentFactory(item));
         }
       });
-      
+
       // remove child components which are no longer in items
       var childIds = super.getChildComponents().map((component) => component.getHtmlNodeId());
       var itemIds = this.modelsubitems.map((item) => this.subitemIdProvider(item));
@@ -78,8 +84,8 @@ describe('Component', () => {
 
     var parent = new ListComponent(
       Handlebars.compile(
-        '{{#each items}}<div key="item-{{id}}" id="child-{{id}}" class="achild"></div>{{/each}}'), 
-        model, model.items,
+        '{{#each items}}<div key="item-{{id}}" id="child-{{id}}" class="achild"></div>{{/each}}'),
+      model, model.items,
       (item) => { //id provider
         return 'child-' + item.id;
       },
@@ -98,7 +104,66 @@ describe('Component', () => {
     expect(document.getElementsByClassName('achild').length).toBe(0);
 
     expect(parent.getChildComponents().length).toBe(0);
-    
+
+  });
+
+  it('should allow child tags', () => {
+    var model = new Model();
+
+    var childModel = new Model();
+    childModel.value = 'foo';
+    model.items = [childModel];
+
+    var parent = new Component(
+      Handlebars.compile('{{#each items}}<ChildComponent id="child-{{@index}}" model="items[{{@index}}]"></ChildComponent>{{/each}}'),
+      model,
+      'componentId', ['ChildComponent'] //tags that generate childs
+    );
+
+    parent.createChildComponent = (tagName, model, id) => {
+      if (tagName === 'ChildComponent') {
+        return new Component(Handlebars.compile('{{value}}'), model, id);
+      }
+    };
+
+    parent.start();
+    expect(document.getElementById('child-0').innerHTML).toBe('foo');
+    expect(parent.getChildComponents().length).toBe(1);
+
+    model.set(() => {
+      model.items.length = 0
+    });
+
+    expect(parent.getChildComponents().length).toBe(0);
+  });
+
+  it('should autodetect child component classes on child tags', () => {
+    var model = new Model();
+
+    var childModel = new Model();
+    childModel.value = 'foo';
+    var childModel2 = new Model();
+    childModel2.value = 'bar';
+    model.items = [childModel, childModel2];
+
+
+    //ChildComponent class is defined in global scope (see start of this file)
+    var parent = new Component(
+      Handlebars.compile('{{#each items}}<ChildComponent id="child-{{@index}}" model="items[{{@index}}]"></ChildComponent>{{/each}}'),
+      model,
+      'componentId', ['ChildComponent'] //tags that generate childs
+    );
+
+    parent.start();
+    expect(document.getElementById('child-0').innerHTML).toBe('foo');
+    expect(document.getElementById('child-1').innerHTML).toBe('bar');
+    expect(parent.getChildComponents().length).toBe(2);
+
+    model.set(() => {
+      model.items.length = 0
+    });
+
+    expect(parent.getChildComponents().length).toBe(0);
   });
 
 });
