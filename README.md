@@ -25,10 +25,13 @@ myModel.set( () => myModel.counter++ );
 
 ### Renderers
 Renderers allows you to maintain your HTML separated from your JavaScript code.
-A renderer is a function that takes a model and converts it into HTML. A very
-powerful library to create this function is
+A renderer is any function that returns an HTML string.
+
+A special type of renderers are those that takes a model and converts it into
+HTML. A very powerful library to create this function is
 [Handlebars](http://handlebarsjs.com/), since a Handlebars template is a valid
-renderer function for fronty.js. For example:
+renderer function for fronty.js (you can [find many
+more](https://www.google.es/search?q=javascript+template+engines)). For example:
 
 ```html
 <div><span>Current counter: {{counter}}</span><button id="increase">Increase</button></div>
@@ -41,14 +44,18 @@ of the model.
 Note: renderers **MUST** return a piece of HTML with a single root element.
 
 ### Components
-Components are responsible of rendering your models into HTML by using a
-renderer function and, more important, to update your HTML when your model
-changes (implementing "one-way binding"), by making as less changes as possible
-in the HTML document in order to increase performance.
+Components take a renderer function and puts its resulting HTML in the actual
+and visible document by making *as less changes as possible* changes in the
+document tree in order to increase performance. A component is rendered in place
+of a given HTML element identified by its `id`, so everything inside that node
+is responsibility of the component. Components can be re-rendered at any time
+so, if the renderer function returns a different content, the component will
+make the necessary changes in the current HTML.
 
-Components receive a renderer function (e.g: a compiled Handlebars template) as
-a parameter and are placed inside a node of your HTML document, so everything
-inside that node is responsibility of the component.
+The most typical `Component` is `ModelComponent`, which receive a `Model`, and
+a renderer function able to take a model and generate HTML (e.g: a compiled
+Handlebars template). The component *observes* the model. If any change is made
+in the model, the component will re-render.
 
 ```javascript
 var myModel = new Model('mymodel');
@@ -56,7 +63,7 @@ myModel.counter = 0;
 var aTemplate = Handlebars.compile(
   '<div><span>Current counter: {{counter}}</span><button id="increase">Increase</button></div>'
 );
-var myComponent = new Component(aTemplate, myModel, 'myapp');
+var myComponent = new ModelComponent(aTemplate, myModel, 'myapp');
 ```
 
 In the example, the component will be placed inside the element with
@@ -77,9 +84,9 @@ Finally, components do not render until you call `start()`.
 myComponent.start();
 ```
 
-A special component is the `RouterComponent`, a class that is able to simulate
-"multiple-pages" inside a single-page application by using the hash part of the
-current url.
+Another special component is the `RouterComponent`, a class that is able to
+simulate "multiple-pages" inside a single-page application by using the hash
+part of the current url.
 
 ## Hello World!
 Here you have a single page with a minimal code to see fronty.js working.
@@ -108,7 +115,7 @@ Here you have a single page with a minimal code to see fronty.js working.
         );
         
         // Component
-        var myComponent = new Component(aTemplate, myModel, 'myapp');
+        var myComponent = new ModelComponent(aTemplate, myModel, 'myapp');
         myComponent.addEventListener('click', '#increase', () => {
           //update the model
           myModel.set( () => myModel.counter++ );
@@ -158,7 +165,7 @@ Promise.all([
       var myModel = new Model('mymodel');
       myModel.counter = 0;
       
-      var myComponent = new Component(Handlebars.templates.counter, myModel, 'myapp');
+      var myComponent = new ModelComponent(Handlebars.templates.counter, myModel, 'myapp');
       myComponent.addEventListener('click', '#increase', () => {
         //update the model
         myModel.set( () => myModel.counter++ );
@@ -196,7 +203,7 @@ class Counter extends Model {
   }
 }
 
-class CounterComponent extends Component {
+class CounterComponent extends ModelComponent {
   constructor(counterModel, node) {
     super(Handlebars.templates.counter, counterModel, node);
     this.counterModel = counterModel;
@@ -234,8 +241,8 @@ in parent components to create child components dynamically. For example:
 ```javascript
 
 // parent component
-class TodoListComponent extends Component {
-  constructor(items, id) {
+class TodoListComponent extends ModelComponent {
+  constructor(id, items) {
     super(
       Handlebars.compile(document.getElementById('todo-list-template').innerHTML),
       items, id, 
@@ -245,8 +252,8 @@ class TodoListComponent extends Component {
 }
 
 // child items component
-class TodoItemComponent extends Component {
-  constructor(item, id) { // <--- a component class with this constructor must be available
+class TodoItemComponent extends ModelComponent {
+  constructor(id, item) { // <--- a component class with this constructor must be available
   }
 }
 ```
@@ -262,16 +269,16 @@ component. For example:
 
 ```javascript
 class TodoListComponent extends Component {
-  constructor(items, id) {
+  constructor(id, items) {
     super(
       Handlebars.compile(document.getElementById('todo-list-template').innerHTML),
       items, id, 
       ['TodoItemComponent']); // <--- tags that create child components
   
   }
-  createChildComponent(childTag, modelItem, itemId) {
+  createModelChildModelComponent(childTag, childTagElement, itemId, modelItem) {
     if (childTag === 'TodoItemComponent') {
-      return new TodoItemComponent(modelItem, itemId);
+      return new TodoItemComponent(itemId, modelItem);
     }
   }
 }

@@ -68,15 +68,12 @@
       reopen() {
         this.done = false;
       }
-      
-      
-
-    }
-    TodoItem.autoincrement = 0;
+    }    
+    TodoItem.autoincrement = 0; // a simple key generator
     
     // Components
-    class TodoListComponent extends Component {
-      constructor(items, id) {
+    class TodoListComponent extends ModelComponent {
+      constructor(id, items) {
         super(Handlebars.compile(document.getElementById('todo-list-template').innerHTML), items, id, ['TodoItemComponent']);
         this.addEventListener('click', '#addbutton', () => {
           items.set(() => {
@@ -87,8 +84,8 @@
       }
     }
 
-    class TodoItemComponent extends Component {
-      constructor(item, id) {
+    class TodoItemComponent extends ModelComponent {
+      constructor(id, item) {
 
         super(Handlebars.compile(document.getElementById('todo-item').innerHTML), item, id);
         this.item = item;
@@ -118,7 +115,7 @@
     $(() => {
       var todos = new TodoList();
 
-      new TodoListComponent(todos, 'todo-list-app').start();
+      new TodoListComponent('todo-list-app', todos).start();
       todos.set(() => {
         todos.addItem(new TodoItem('lunch', false, todos));
         todos.addItem(new TodoItem('dinner', false, todos));
