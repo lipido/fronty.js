@@ -183,7 +183,7 @@ describe('Component', () => {
     }, {
       item: 'item-4'
     }];
-    var component = new Component(Handlebars.compile('{{#each items}}<p key="{{item}}" class="item">{{item}}</p>{{/each}}'), model, 'componentId');
+    var component = new Component(Handlebars.compile('<div>{{#each items}}<p key="{{item}}" class="item">{{item}}</p>{{/each}}</div>'), model, 'componentId');
 
     component.start();
 
@@ -200,6 +200,33 @@ describe('Component', () => {
     // do not touch
     expect(document.getElementsByClassName('item')[2]).toBe(item4Node);
 
+  });
+  
+  it('should work well with mixed key and non-key elements', () => {
+    var realRenderer = () =>{
+        return '<div><li key="1"></li><p>Hello</p><li key="3"></li></div>';
+    }
+    
+    var renderer = () => {
+      return realRenderer();
+    }
+    var component = new Component(renderer, [], 'componentId');
+    
+    component.start();
+    expect(document.getElementById('componentId').innerHTML).toBe('<li key="1"></li><p>Hello</p><li key="3"></li>');  
+    realRenderer = () =>{
+       return '<div><li key="0"></li><p>Bye</p><li key="1"></li></div>';
+    }
+    component.render();
+    expect(document.getElementById('componentId').innerHTML).toBe('<li key="0"></li><p>Bye</p><li key="1"></li>');  
+   
+    realRenderer = () =>{
+       return '<div><li key="0"></li><p>Bar</p><li key="1"></li></div>';
+    }
+    
+    component.render();
+    expect(document.getElementById('componentId').innerHTML).toBe('<li key="0"></li><p>Bar</p><li key="1"></li>');  
+      
   });
   
 });
