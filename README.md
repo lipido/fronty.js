@@ -7,6 +7,9 @@ many libraries doing this for professional projects (e.g:
 [Ember](http://emberjs.com), [AngularJS](http://angularjs.org),
 [Vue.js](https://vuejs.org), [React](https://facebook.github.io/react/), etc.)**
 
+This readme and documentation can be also viewed in
+[https://lipido.github.io/fronty.js](https://lipido.github.io/fronty.js).
+
 ## Main concepts
 
 ### Models
