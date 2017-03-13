@@ -1134,7 +1134,7 @@ class RouterComponent extends ModelComponent {
 
     if (model instanceof Array) {
       model.push(routerModel);
-    } else if (model !== null) {
+    } else if (model !== null && model !== undefined) {
       model = [routerModel, model];
     } else {
       model = routerModel;
