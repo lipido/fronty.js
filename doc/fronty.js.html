@@ -1,4 +1,32 @@
-/*
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: fronty.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: fronty.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>/*
   fronty.js: Component-based front-end JavaScript library
   author: lipido
 */
@@ -6,31 +34,31 @@
 /** 
  *  Class representing a component, which is an object whose responsibilities
  *  are:
- *  <ul>
- *    <li>Render the HTML results of a provided <em>renderer function</em> inside a
+ *  &lt;ul>
+ *    &lt;li>Render the HTML results of a provided &lt;em>renderer function&lt;/em> inside a
  *    specified element of the showing document, making as less DOM changes as
- *    possible.</li>
- *    <li>Manage nested child components. Child components are components which
- *      render in an element inside this component. When <em>this</em> Component
+ *    possible.&lt;/li>
+ *    &lt;li>Manage nested child components. Child components are components which
+ *      render in an element inside this component. When &lt;em>this&lt;/em> Component
  *      re-renders, it restores its child's subtrees on their places. Child Components
- *      can be added manually or created dynamically by <em>this</em> Component via
- *      custom tag elements (See {@link Component#childTags}).</li>
- *    <li>Manage event listeners, restoring them each re-rendering.</li>
- *  </ul>
+ *      can be added manually or created dynamically by &lt;em>this&lt;/em> Component via
+ *      custom tag elements (See {@link Component#childTags}).&lt;/li>
+ *    &lt;li>Manage event listeners, restoring them each re-rendering.&lt;/li>
+ *  &lt;/ul>
  *  Components render when you call {@link Component#start|start()}, and updates each time you call the
  *  {@link Component#render|render()} function. 
  *
  * @example
- * <!-- html page -->
- * <body>
- *  <div id="mycomponent"></div>
- * </body>
+ * &lt;!-- html page -->
+ * &lt;body>
+ *  &lt;div id="mycomponent">&lt;/div>
+ * &lt;/body>
  *
  * @example
  * //Javascript
  * var counter = 1;
  * var component = new Component(
- *  () => '<div>Counter: <span>'+counter+'</span></div>', // renderer function
+ *  () => '&lt;div>Counter: &lt;span>'+counter+'&lt;/span>&lt;/div>', // renderer function
  *  'mycomponent' // HTML element id
  *  );
  * component.start(); // first render
@@ -40,7 +68,7 @@
  * }, 1000);
  */
 class Component {
-
+  
   /**
    * Creates a new Component.
    *
@@ -48,10 +76,10 @@ class Component {
    * @param {Function} renderer A non-parameter function that returns HTML.
    * @param {String} htmlNodeId The id of the HTML element where this Component should 
    *                              render to.
-   * @param {Array.<String>} [childTags] An optional Array of strings of custom-tags for dynamically created child Components.
+   * @param {Array.&lt;String>} [childTags] An optional Array of strings of custom-tags for dynamically created child Components.
    */
   constructor(renderer, htmlNodeId, childTags) {
-
+    
     /**
      * The renderer function.
      *
@@ -60,7 +88,7 @@ class Component {
      * @default null
      */
     this.renderer = renderer;
-
+    
     /**
      * The HTML element id where it renders into.
      * @name Component#htmlNodeId
@@ -68,10 +96,10 @@ class Component {
      * @default null
      */
     this.htmlNodeId = htmlNodeId;
-
+    
     /**
      * The optional name of custom element tags where child Components will
-     * be created dynamically.<br>
+     * be created dynamically.&lt;br>
      *
      * During render, if in the HTML provided by the {@link Component#renderer|renderer function}
      * one of these tags is found, the {@link Component#createChildComponent|createChildComponent()}
@@ -81,11 +109,11 @@ class Component {
      * @type String
      * @default empty array
      */
-    this.childTags = (childTags) ? childTags : [];
-
+    this.childTags = (childTags)? childTags : [];
+    
     // do not render until the component is started with start()
     /**
-     * Whether this Component is stopped.<br>
+     * Whether this Component is stopped.&lt;br>
      * 
      * Stopped Components do not render.
      *
@@ -94,16 +122,16 @@ class Component {
      * @default true
      */
     this.stopped = true;
-
+    
     /**
      * The event listeners that this Component is managing, arranged by the HTML
      * query selector. See {@link Component#addEventListener|addEventListener()}.
      *
      * @name Component#eventListeners
-     * @type {Object.<string, {callback: Function, eventType: String}>}
+     * @type {Object.&lt;string, {callback: Function, eventType: String}>}
      */
     this.eventListeners = {};
-
+    
     // Currently installed event listeners by real DOM nodes (private)
     this._listeners = [];
 
@@ -111,15 +139,15 @@ class Component {
      * The array of child components.
      *
      * @name Component#childComponents
-     * @type Array.<Component>
+     * @type Array.&lt;Component>
      */
     this.childComponents = [];
-
+    
     /**
      * The child components, arranged by their HTML element id.
      *
      * @name Component#childComponentIds
-     * @type Object.<string, Component>
+     * @type Object.&lt;string, Component>
      */
     this.childComponentIds = {};
   }
@@ -135,7 +163,7 @@ class Component {
   getHtmlNodeId() {
     return this.htmlNodeId;
   }
-
+  
   /**
    * Sets the HTML element id where this Component should render.
    *
@@ -150,10 +178,10 @@ class Component {
 
   // child management
   /**
-   * Adds a child Component to this Component.<br>
+   * Adds a child Component to this Component.&lt;br>
    *
    * The HTML element where the child Component will render into do not change
-   * when <em>this</em> Component is re-rendered.
+   * when &lt;em>this&lt;/em> Component is re-rendered.
    *
    * The child component will be started or stopped if this Component is currently
    * started or stopped, respectively.
@@ -164,11 +192,7 @@ class Component {
     this.childComponents.push(component);
     this.childComponentIds[component.getHtmlNodeId()] = component;
 
-    if (this.stopped) {
-      component.stop();
-    } else {
-      component.start();
-    }
+    this.stopped ? component.stop() : component.start();
 
     component.render();
   }
@@ -182,9 +206,9 @@ class Component {
    * the same name as the tagName and instantiates an object of this class
    * passing the id to it. In this sense, a parent Component
    * specifying a child tag name 'ChildComponent' as this:
-   * <pre>new Component(renderer, 'parentId', ['ChildComponent'])</pre>
+   * &lt;pre>new Component(renderer, 'parentId', ['ChildComponent'])&lt;/pre>
    * will create instances of ChildComponent in all places where the tag
-   * &lt;childcomponent&gt; is found in the HTML provided by the parent
+   * &amp;lt;childcomponent&amp;gt; is found in the HTML provided by the parent
    * rendereer function.
    * @param {String} tagName The HTML tag name used to place the new child Component
    * in the parent HTML
@@ -194,20 +218,20 @@ class Component {
    * @see {@link Component#childTags}
    */
   createChildComponent(tagName, childTagElement, id) {
-    var constructorFunction = eval('' + tagName); //jshint ignore:line
+    var constructorFunction = eval('' + tagName);
 
     if (constructorFunction instanceof Function) {
       return new constructorFunction(id);
     }
   }
-
+  
   /**
-   * Removes a child Component from this Component.<br>
+   * Removes a child Component from this Component.&lt;br>
    *
-   * After the child removal, <em>this</em> component will re-render.
+   * After the child removal, &lt;em>this&lt;/em> component will re-render.
    *
    * @param {Component} component The child Component.
-   */
+   */  
   removeChildComponent(component) {
     var index = this.childComponents.indexOf(component);
 
@@ -220,9 +244,9 @@ class Component {
   }
 
   /**
-   * Gets the child Components of this Component.<br>
+   * Gets the child Components of this Component.&lt;br>
    *
-   * @returns {Array.<Component>} The child Components.
+   * @returns {Array.&lt;Component>} The child Components.
    */
   getChildComponents() {
     return this.childComponents;
@@ -231,7 +255,7 @@ class Component {
   /**
    * Gets the child Components arranged by id.
    *
-   * @returns {Array.<String, Component>} The child Components arranged by id.
+   * @returns {Array.&lt;String, Component>} The child Components arranged by id.
    */
   getChildComponentsById() {
     return this.childComponentIds;
@@ -246,24 +270,24 @@ class Component {
   getChildComponent(id) {
     return this.childComponentIds[id];
   }
-
+  
   // rendering
   /**
    * Render this Component, which consists in:
-   * <ol>
-   * <li>Save the child Component DOM trees, because they may be moved to another place in the DOM.</li>
-   * <li>Call the {@link Component#renderer|renderer function}.</li>
-   * <li>Calculate the differences between the current DOM of this Component
+   * &lt;ol>
+   * &lt;li>Save the child Component DOM trees, because they may be moved to another place in the DOM.&lt;/li>
+   * &lt;li>Call the {@link Component#renderer|renderer function}.&lt;/li>
+   * &lt;li>Calculate the differences between the current DOM of this Component
    * and the new "virtual" DOM provided by the renderer function, skipping those
-   * elements where child nodes are rendering.</li>
-   * <li>Patch the current DOM with the previously computed differences.</li>
-   * <li>Restore the child Components in their new places if they where moved to another
-   * part in the DOM.</li>
-   * <li>Restore event listeners in their corresponding elements, because 
-   * some could be moved to another place in the DOM.</li>
-   * <li>Create child nodes if new elements with tag name in
-   * {@link Component#childTags} are found in the HTML.</li>
-   * </ol> 
+   * elements where child nodes are rendering.&lt;/li>
+   * &lt;li>Patch the current DOM with the previously computed differences.&lt;/li>
+   * &lt;li>Restore the child Components in their new places if they where moved to another
+   * part in the DOM.&lt;/li>
+   * &lt;li>Restore event listeners in their corresponding elements, because 
+   * some could be moved to another place in the DOM.&lt;/li>
+   * &lt;li>Create child nodes if new elements with tag name in
+   * {@link Component#childTags} are found in the HTML.&lt;/li>
+   * &lt;/ol> 
    */
   render() {
     this._doRender((htmlContents) => {
@@ -283,23 +307,23 @@ class Component {
 
       /* alternative via parse. Slower in tests:  https://jsperf.com/domparser-vs-innerhtml-vs-createhtmldocument/4 */
       //var newTree = (new DOMParser()).parseFromString(htmlContents, "text/html").body.childNodes[0];
-
+      
       // copy id to the root element
-      if (newTree.nodeType === Node.ELEMENT_NODE && newTree.getAttribute('id') === null) {
+      if (newTree.nodeType === Node.ELEMENT_NODE &amp;&amp; newTree.getAttribute('id') == null) {
         newTree.setAttribute('id', this.getHtmlNodeId());
       }
 
       // TODO: create here a hook to preprocess newTree before comparing
-
+      
       var patches = TreeComparator.diff(currentTree, newTree, (node1, node2) => {
         // skip comparisons on our child's Component slots (child components are the responsible ones) 
         // the parent component, once re-rendered, will see its child slots empty again, but
         // we don't want to replace those slot with the empty one, so we skip those comparisons
-        if (node1.id && node2.id && node1.id == node2.id && (node1.id in this.childComponentIds)) {
+        if (node1.id &amp;&amp; node2.id &amp;&amp; node1.id == node2.id &amp;&amp; (node1.id in this.childComponentIds)) {
           // do not replace a component slot with a node with the same id, skip this operation
           console.log('Component [#' + this.htmlNodeId + ']: skipping child inspection: ' + node1.id);
           return 'SKIP';
-        } else if (node1.id && (node1.id in this.childComponentIds)) {
+        } else if (node1.id &amp;&amp; (node1.id in this.childComponentIds)) {
           // we want to replace a component slot with another stuff, do complete replacement (maybe the slot is removed)
           return 'REPLACE';
         }
@@ -316,12 +340,12 @@ class Component {
 
   // lifecycle management
   /**
-   * Stops this Component and all of its children.<br>
+   * Stops this Component and all of its children.&lt;br>
    *
    * Stopped Components do not render. Once this Component 
    */
   stop() {
-    if (this.stopped === false) {
+    if (this.stopped == false) {
       this.stopped = true;
 
       this.childComponents.forEach((child) => {
@@ -332,7 +356,7 @@ class Component {
   }
 
   /**
-   * Starts this Component and all of its children.<br>
+   * Starts this Component and all of its children.&lt;br>
    *
    * A Component need to be started in order to render. If this Component
    * was stopped, it will render. Once this Component has been started and
@@ -353,7 +377,7 @@ class Component {
 
   // event-listener management
   /**
-   * Adds an event listener to HTML element(s) inside this Component.<br>
+   * Adds an event listener to HTML element(s) inside this Component.&lt;br>
    *
    * Listeners added to elements controlled by this Component should be added
    * via this method, not directly to the HTML elements, because they can be
@@ -386,21 +410,21 @@ class Component {
    */
   beforeRender() { //hook
   }
-
+  
   /**
    * Hook function called by this Component after rendering. As a hook, it is
    * intended to be overriden by subclasses.
    */
   afterRender() { //hook
   }
-
+  
   /**
    * Hook function called by this Component just after start. As a hook, it is
    * intended to be overriden by subclasses.
    */
   onStart() { //hook
   }
-
+  
   /**
    * Hook function called by this Component just after stop. As a hook, it is
    * intended to be overriden by subclasses.
@@ -412,7 +436,7 @@ class Component {
   _restoreChildNodes(savedChildNodes) {
     this.childComponents.forEach((childComponent) => {
       var childId = childComponent.getHtmlNodeId();
-      if (this._getChildNode(childId) !== null && childId in savedChildNodes) {
+      if (this._getChildNode(childId) != null &amp;&amp; savedChildNodes[childId] != null) {
         var currentComponentNode = this._getChildNode(childId);
         if (savedChildNodes[childId] != currentComponentNode) {
           currentComponentNode.parentNode.replaceChild(savedChildNodes[childId], currentComponentNode);
@@ -420,17 +444,17 @@ class Component {
       }
     });
   }
-
+  
   _saveChildNodes() {
     var savedChildNodes = [];
     this.childComponents.forEach((childComponent) => {
       var childId = childComponent.getHtmlNodeId();
-      if (this._getChildNode(childId) !== null) {
+      if (this._getChildNode(childId) != null) {
         savedChildNodes[childId] = this._getChildNode(childId);
       }
     });
     return savedChildNodes;
-
+    
   }
   _getComponentNode() {
     return document.getElementById(this.getHtmlNodeId());
@@ -480,7 +504,7 @@ class Component {
       var childTagElements = Array.from(this._getComponentNode().getElementsByTagName(childTag));
 
       var childIds = [];
-      for (var i = 0; i < childTagElements.length; i++) {
+      for (var i = 0; i &lt; childTagElements.length; i++) {
         var childTagElement = childTagElements[i];
         var itemId = childTagElement.getAttribute('id');
         childIds.push(itemId);
@@ -495,29 +519,29 @@ class Component {
         }
       }
 
-      for (var j = this.childComponentsByTag[childTag].length - 1; j >= 0; j--) {
-        var childComponent = this.childComponentsByTag[childTag][j];
-        if (childIds.indexOf(childComponent.getHtmlNodeId()) === -1 &&
+      for (var i = this.childComponentsByTag[childTag].length - 1; i >= 0; i--) {
+        var childComponent = this.childComponentsByTag[childTag][i];
+        if (childIds.indexOf(childComponent.getHtmlNodeId()) === -1 &amp;&amp;
           this._getComponentNode().querySelector('#' + childComponent.getHtmlNodeId()) === null) {
 
           this.removeChildComponent(childComponent);
-          this.childComponentsByTag[childTag].splice(j, 1);
+          this.childComponentsByTag[childTag].splice(i, 1);
         }
       }
     });
   }
 
   // event listeners "private" methods
-
+  
   _updateEventListeners() {
     this._clearAllEventListeners();
-    Object.getOwnPropertyNames(this.eventListeners).forEach((nodesQuery) => {
+    for (var nodesQuery in this.eventListeners) {
       this.eventListeners[nodesQuery].forEach((listenerSpec) => {
         console.log('Component [#' + this.htmlNodeId + ']: adding listener ' + nodesQuery);
         this._addEventListener(
           nodesQuery, listenerSpec.eventType, listenerSpec.callback);
       });
-    });
+    }
   }
 
   _clearAllEventListeners() {
@@ -526,17 +550,17 @@ class Component {
         console.log('Component [#' + this.htmlNodeId + ']: removing listener');
         listenerSpec.node.removeEventListener(
           listenerSpec.eventType, listenerSpec.callback);
-      });
-      this._listeners = [];
-    }
+        });
+        this._listeners = [];
+    } 
   }
 
   _addEventListener(nodesQuery, eventType, callback) {
     if (!this._listeners) {
       this._listeners = [];
     }
-
-    if (this.htmlNodeId && this._getComponentNode()) {
+    
+    if (this.htmlNodeId &amp;&amp; this._getComponentNode()) {
       this._getComponentNode().querySelectorAll(nodesQuery).forEach((element) => {
         element.addEventListener(eventType, callback);
         this._listeners.push({
@@ -544,33 +568,33 @@ class Component {
           eventType: eventType,
           callback: callback
         });
-      });
+      })
     }
   }
 }
 
-/*********** DOM TREE DIFF & PATCH *******/
+/*********** DOM TREE DIFF &amp; PATCH *******/
 /**
  * A class to do discover differences between two DOM trees, calculating a
- * <em>patch</em>, as well as to reconcile those differences by applying the
- * <em>patch</em>
+ * &lt;em>patch&lt;/em>, as well as to reconcile those differences by applying the
+ * &lt;em>patch&lt;/em>
  */
 class TreeComparator {
-
+  
   /**
-   * Compute the difference between two DOM trees, giving their root nodes.<br>
+   * Compute the difference between two DOM trees, giving their root nodes.&lt;br>
    *
-   * The resulting object is a <em>patch</em> object that can be used to 
-   * keep the first given tree equivalent to the second given tree.<br>
+   * The resulting object is a &lt;em>patch&lt;/em> object that can be used to 
+   * keep the first given tree equivalent to the second given tree.&lt;br>
    *
    * An optional function can be provided to control how different subtrees are
    * compared. This function receives two nodes (node1, node2) and can return:
-   * <ul>
-   * <li>'DIFF': The comparison should be done as normal.</li>
-   * <li>'SKIP': The comparison should not go deeper.</li>
-   * <li>'REPLACE': The node1 should be totally replaced by the node2,
-   * without going deeper</li>
-   * </ul>
+   * &lt;ul>
+   * &lt;li>'DIFF': The comparison should be done as normal.&lt;/li>
+   * &lt;li>'SKIP': The comparison should not go deeper.&lt;/li>
+   * &lt;li>'REPLACE': The node1 should be totally replaced by the node2,
+   * without going deeper&lt;/li>
+   * &lt;/ul>
    * @param {Node} node1 The root element of the first tree to compare.
    * @param {Node} node2 The root element of the second tree to compare.
    * @param {Function} [comparePolicy] An (optional) callback function to be called
@@ -591,12 +615,12 @@ class TreeComparator {
 
     var result = [];
 
-    if (node1 === null ||
+    if (node1 == null ||
       node1.tagName !== node2.tagName ||
       node1.nodeType !== node2.nodeType ||
       (
-        node1.nodeValue !== null &&
-        node2.nodeValue !== null &&
+        node1.nodeValue !== null &amp;&amp;
+        node2.nodeValue !== null &amp;&amp;
         node1.nodeValue !== node2.nodeValue
       )) {
       return [{
@@ -627,12 +651,12 @@ class TreeComparator {
     var insertions = 0;
     var deletions = 0;
     var child1Array = Array.from(node1.childNodes); //copy node1 childs to an array, sinde we will do some swaps here, but we do not want to do them in DOM now
-
-    while (child1pos < node1.childNodes.length && child2pos < node2.childNodes.length) {
+    node1.childNodes.forEach((node) => {})
+    while (child1pos &lt; node1.childNodes.length &amp;&amp; child2pos &lt; node2.childNodes.length) {
       var child1 = child1Array[child1pos];
       var child2 = node2.childNodes[child2pos];
 
-      if (child1.nodeType !== Node.ELEMENT_NODE && child2.nodeType === Node.ELEMENT_NODE) {
+      if (child1.nodeType !== Node.ELEMENT_NODE &amp;&amp; child2.nodeType === Node.ELEMENT_NODE) {
         result.push({
           mode: 'remove-node',
           toReplace: child1
@@ -642,7 +666,7 @@ class TreeComparator {
         continue;
       }
 
-      if (child1.nodeType === Node.ELEMENT_NODE && child2.nodeType !== Node.ELEMENT_NODE) {
+      if (child1.nodeType === Node.ELEMENT_NODE &amp;&amp; child2.nodeType !== Node.ELEMENT_NODE) {
         result.push({
           mode: 'insert-node',
           toReplace: node1,
@@ -654,7 +678,7 @@ class TreeComparator {
         continue;
       }
 
-      if (child1.nodeType !== Node.ELEMENT_NODE && child2.nodeType !== Node.ELEMENT_NODE) {
+      if (child1.nodeType !== Node.ELEMENT_NODE &amp;&amp; child2.nodeType !== Node.ELEMENT_NODE) {
         var partial =
           TreeComparator.diff(
             child1,
@@ -671,8 +695,8 @@ class TreeComparator {
       var key2 = child2.getAttribute('key'); // maybe null (no-key)
 
       if (key1 !== key2) {
-        if ((key1 in keyElementIndexNode2) && (key2 in keyElementIndexNode1)) {
-
+        if ((key1 in keyElementIndexNode2) &amp;&amp; (key2 in keyElementIndexNode1)) {
+          
           //both nodes are in the initial and final result, so we only need to swap them
           result.push({
             mode: 'swap-nodes',
@@ -709,29 +733,31 @@ class TreeComparator {
 
       } else {
         // both keys are equals (same key OR both null)
-        result.push.apply(result, TreeComparator.diff(
-          child1,
-          child2,
-          comparePolicy));
+        var partial =
+          TreeComparator.diff(
+            child1,
+            child2,
+            comparePolicy);
+        result.push.apply(result, partial);
 
         child1pos++;
         child2pos++;
       }
     }
 
-    if (child1pos < node1.childNodes.length) {
-      for (var i = child1pos; i < node1.childNodes.length; i++) {
+    if (child1pos &lt; node1.childNodes.length) {
+      for (var i = child1pos; i &lt; node1.childNodes.length; i++) {
         result.push({
           mode: 'remove-node',
           toReplace: node1.childNodes[i]
         });
       }
-    } else if (child2pos < node2.childNodes.length) {
-      for (var j = child2pos; j < node2.childNodes.length; j++) {
+    } else if (child2pos &lt; node2.childNodes.length) {
+      for (var i = child2pos; i &lt; node2.childNodes.length; i++) {
         result.push({
           mode: 'append-child',
           toReplace: node1,
-          replacement: node2.childNodes[j]
+          replacement: node2.childNodes[i]
         });
       }
     }
@@ -778,15 +804,15 @@ class TreeComparator {
   }
 
   static _equalAttributes(node1, node2) {
-    if (!node1.attributes && node2.attributes ||
-      node1.attributes && !node2.attributes) {
+    if (!node1.attributes &amp;&amp; node2.attributes ||
+      node1.attributes &amp;&amp; !node2.attributes) {
       return false;
     } else if (
-      node1.attributes &&
+      node1.attributes &amp;&amp;
       node1.attributes.length != node2.attributes.length) {
       return false;
     } else if (node1.attributes) {
-      for (var i = 0; i < node1.attributes.length; i++) {
+      for (var i = 0; i &lt; node1.attributes.length; i++) {
         if (node1.attributes[i].name != node2.attributes[i].name ||
           node1.attributes[i].value != node2.attributes[i].value) {
           return false;
@@ -815,22 +841,21 @@ class TreeComparator {
       var toReplace = patch.toReplace;
       var replacement = patch.replacement;
       if (patch.mode === 'attributes') {
-        var attribute = null;
-        for (var i = 0; i < replacement.attributes.length; i++) {
-          attribute = replacement.attributes[i];
-          if (attribute.name === 'value' &&
+        for (var i = 0; i &lt; replacement.attributes.length; i++) {
+          var attribute = replacement.attributes[i];
+          if (attribute.name === 'value' &amp;&amp;
             toReplace.value != attribute.value) {
             toReplace.value = attribute.value;
           }
           if (attribute.name === 'checked') {
             toReplace.checked =
-              (attribute.checked !== false) ? true : false;
+              (attribute.checked != false) ? true : false;
           }
           toReplace.setAttribute(attribute.name, attribute.value);
         }
 
-        for (var j = toReplace.attributes.length - 1; j >= 0; j--) {
-          attribute = patch.toReplace.attributes[j];
+        for (var i = toReplace.attributes.length - 1; i >= 0; i--) {
+          var attribute = patch.toReplace.attributes[i];
           if (!replacement.hasAttribute(attribute.name)) {
             if (attribute.name === 'checked') {
               toReplace.checked = false;
@@ -860,13 +885,13 @@ class TreeComparator {
 /**
  * A Model is a general-purpose, observable object, holding user specific data.
  *
- *  The object can receive <em>observer functions</em> (via 
+ *  The object can receive &lt;em>observer functions&lt;/em> (via 
  * {@link Model#addObserver|addObserver()} function), which will be notified
  *  when the {@link Model#set|set( callback )} method of this object is called.
  *
  */
 class Model {
-
+  
   /**
    * Creates an instance of a Model.
    *
@@ -878,7 +903,7 @@ class Model {
      * via {@link Model#set|set()} method.
      */
     this.observers = [];
-
+    
     /**
      * The name of the model.
      * @type {String}
@@ -887,7 +912,7 @@ class Model {
   }
 
   /**
-   * Method to update the this Model.<br>
+   * Method to update the this Model.&lt;br>
    * A callback function is passed which is, typically, in charge to make changes 
    * in this object. When this callback returns, observers of this Model are
    * notified.
@@ -916,9 +941,9 @@ class Model {
       observer(this, hint);
     });
   }
-
+  
   /**
-   * Adds an observer function to this Model.<br>
+   * Adds an observer function to this Model.&lt;br>
    * 
    * @param {Function} observer The observer to add.
    * @see {@link Model#observers}
@@ -929,7 +954,7 @@ class Model {
   }
 
   /**
-   * Removes an observer function from this Model.<br>
+   * Removes an observer function from this Model.&lt;br>
    *
    * The function will no longer be notified of changes in this Model.
    *
@@ -945,9 +970,9 @@ class Model {
 
 
 /** 
- * Class representing a model-based Component.<br>
+ * Class representing a model-based Component.&lt;br>
  *
- * A ModelComponent is a Component which <em>auto-renders</em> itself when a
+ * A ModelComponent is a Component which &lt;em>auto-renders&lt;/em> itself when a
  * given {@link Model|model} object changes. This model object is also passed to this
  * Component's {@link Component#renderer|renderer function} each time this
  * Component is rendered.
@@ -961,12 +986,12 @@ class ModelComponent extends Component {
    *
    * @param {Function} modelRenderer A renderer function which accepts a
    * {@link Model} as argument.
-   * @param {Model|Array.<Model>} model The model or an array of models. In case of
+   * @param {Model|Array.&lt;Model>} model The model or an array of models. In case of
    * an array is passed, the renderer function will receive a single model object
    * which combines all the properties of those models.
    * @param {String} htmlNodeId The id of the HTML element where this Component should 
    *                              render to.
-   * @param {Array.<String>} [childTags] An optional Array of strings of custom-tags for dynamically created child Components.
+   * @param {Array.&lt;String>} [childTags] An optional Array of strings of custom-tags for dynamically created child Components.
    */
   constructor(modelRenderer, model, htmlNodeId, childTags) {
     super(() => {
@@ -976,14 +1001,14 @@ class ModelComponent extends Component {
     if (!model) {
       /**
        * The models this ModelComponent is handling
-       * @type {Array.<Model>}
+       * @type {Array.&lt;Model>}
        */
       this.models = [];
     } else if (model instanceof Model) {
       this.models = [model];
     } else if (model instanceof Array) {
       model.forEach((model) => {
-        if (!(model instanceof Model)) {
+        if (!model instanceof Model) {
           throw 'Component [' + this.htmlNodeId + ']: the model must inherit Model';
         }
       });
@@ -994,7 +1019,7 @@ class ModelComponent extends Component {
   }
 
   /**
-   * The observer function added to all models this ModelComponent manages.<br>
+   * The observer function added to all models this ModelComponent manages.&lt;br>
    * This function simply calls {@link ModelComponent#render|render}, but
    * you can override it.
    *
@@ -1008,7 +1033,7 @@ class ModelComponent extends Component {
   // lifecycle management
   stop() {
 
-    if (this.stopped === false) {
+    if (this.stopped == false) {
       this.models.forEach((model) => {
         model.removeObserver(this);
       });
@@ -1032,15 +1057,15 @@ class ModelComponent extends Component {
     });
     return context;
   }
-
+  
   /** 
    * Overrides the child Component creation by also considering a "model"
-   * attribute in the tag.<br>
+   * attribute in the tag.&lt;br>
    * The model attribute is evaluated with eval() and calls 
    * {@link ModelComponent#createChildModelComponent}.
    * @example
-   * <!-- How to add a model attribute in the HTML child tag -->
-   * <childcomponent id="child-0" model="items[0]">
+   * &lt;!-- How to add a model attribute in the HTML child tag -->
+   * &lt;childcomponent id="child-0" model="items[0]">
    *
    * @param {String} tagName The HTML tag name used to place the new child Component
    * in the parent HTML
@@ -1051,17 +1076,16 @@ class ModelComponent extends Component {
    */
   createChildComponent(tagName, childTagElement, id) {
     var oneModelObject = this._mergeModelInOneObject();
-    var modelItem = null;
     if (childTagElement.getAttribute('model')) {
-      modelItem = eval('oneModelObject.' + childTagElement.getAttribute('model')); //jshint ignore:line
+      var modelItem = eval('oneModelObject.' + childTagElement.getAttribute('model'));
     }
     return this.createChildModelComponent(tagName, childTagElement, id, modelItem);
   }
-
+  
   /**
    * This method searches for a class with the name of the childTagElement parameter
    * with a
-   * constructor taking two attributes: id and model.<br>
+   * constructor taking two attributes: id and model.&lt;br>
    * If you have components with different constructors or this policy does not
    * adapt to your needs, you can override this method.
    *
@@ -1073,7 +1097,7 @@ class ModelComponent extends Component {
    * @return {Component} The new created child component.
    */
   createChildModelComponent(tagName, childTagElement, id, modelItem) {
-    var constructorFunction = eval('' + tagName); //jshint ignore:line
+    var constructorFunction = eval('' + tagName);
 
     if (constructorFunction instanceof Function) {
       return new constructorFunction(id, modelItem);
@@ -1082,19 +1106,19 @@ class ModelComponent extends Component {
 }
 
 /**
- *  Class representing a router component.<br>
+ *  Class representing a router component.&lt;br>
  *  
  *  A router is reponsible of parsing the current browser location 
  *  mapping its current hash to "pages". Each time the location is
  *  changed, the router tries to replace the inner HTML in a given html node id
  *  element.Pages are:
- * <ol>
- *    <li>A Component, which will render the page contents.</li>
- *    <li>Some other options, such as title.</li>
- *  </ol>
- *  You have to define your by calling {@link RouterComponent#setRouterConfig}.<br>
+ * &lt;ol>
+ *    &lt;li>A Component, which will render the page contents.&lt;/li>
+ *    &lt;li>Some other options, such as title.&lt;/li>
+ *  &lt;/ol>
+ *  You have to define your by calling {@link RouterComponent#setRouterConfig}.&lt;br>
  *  Finally, calling start() will try to go to the page indicated by the hash, rendering
- *  its contents.<br>
+ *  its contents.&lt;br>
  *  The RouterComponent is a {@link ModelComponent} because it has an own Model
  *  containing the "currentPage" property.
  *
@@ -1103,12 +1127,12 @@ class ModelComponent extends Component {
  *      // id of the HTML element where router renders.
  *      'router', 
  *      //HTML of the router.
- *      () => "<div id='router'><div id='maincontent'></div></div>", 
+ *      () => "&lt;div id='router'>&lt;div id='maincontent'>&lt;/div>&lt;/div>", 
  *      // id inside the router where the current page component renders.
  *      'maincontent'); 
  * router.setRouterConfig(
  * {    
- *    login: { //rendered on http://<host>/<page>.html#login
+ *    login: { //rendered on http://&lt;host>/&lt;page>.html#login
  *      component: new LoginComponent(), // LoginComponent is a Component
  *      title: 'Login'
  *    },
@@ -1120,9 +1144,9 @@ class ModelComponent extends Component {
  * @extends ModelComponent
  */
 class RouterComponent extends ModelComponent {
-
+  
   /**
-   * Creates a new router.<br>
+   * Creates a new router.&lt;br>
    * 
    * @param {String} rootHtmlId The HTML element id where the router renders.
    * @param {Function} modelRenderer the model renderer function
@@ -1133,8 +1157,8 @@ class RouterComponent extends ModelComponent {
     var routerModel = new Model('RouterModel');
 
     if (model instanceof Array) {
-      model.push(routerModel);
-    } else if (model !== null) {
+      model.push(routerModel)
+    } else if (model != null) {
       model = [routerModel, model];
     } else {
       model = routerModel;
@@ -1170,18 +1194,18 @@ class RouterComponent extends ModelComponent {
       this._goToCurrentPage();
     }
   }
-
+  
   /**
    * Sets the router configuration. This configuration basically maps
    * URL hashes to Components that should be showed.
    *
-   * @param {Object.<String, {component: Component, title: String}>}
+   * @param {Object.&lt;String, {component: Component, title: String}>}
    * routerConfig Mapping of URL hashes to pages.
    * 
    * @example
    * router.setRouterConfig(
    * {    
-   *    login: { //rendered on http://<host>/<page>.html#login
+   *    login: { //rendered on http://&lt;host>/&lt;page>.html#login
    *      component: new LoginComponent(), // LoginComponent is a Component
    *      title: 'Login'
    *    },
@@ -1217,7 +1241,7 @@ class RouterComponent extends ModelComponent {
   }
 
   /**
-   * Gets this the model of this router.<br>
+   * Gets this the model of this router.&lt;br>
    *
    * The router contains an internal model where the current page is stored 
    * (among those models provided in the constructor). You can obtain this
@@ -1230,10 +1254,10 @@ class RouterComponent extends ModelComponent {
   }
 
   /**
-   * Gets a query parameter of the current route.<br>
+   * Gets a query parameter of the current route.&lt;br>
    *
-   * Note: <em>route query parameters</em> are NOT the standard URL query
-   * parameters, which are specified BEFORE the hash.<br>
+   * Note: &lt;em>route query parameters&lt;/em> are NOT the standard URL query
+   * parameters, which are specified BEFORE the hash.&lt;br>
    *
    * For example, if the current URL is 'index.html#login?q=1',
    * a call to getRouteQueryParam('q') returns 1.
@@ -1243,8 +1267,8 @@ class RouterComponent extends ModelComponent {
    */
   getRouteQueryParam(name) {
     var queryString = window.location.hash.replace(/#[^\?]*(\?.*)/, "$1");
-    name = name.replace(/[\[\]]/g, "\\$&");
-    var regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
+    name = name.replace(/[\[\]]/g, "\\$&amp;");
+    var regex = new RegExp("[?&amp;]" + name + "(=([^&amp;#]*)|&amp;|#|$)"),
       results = regex.exec(queryString);
     if (!results) return null;
     if (!results[2]) return '';
@@ -1253,7 +1277,7 @@ class RouterComponent extends ModelComponent {
 
   _calculateCurrentPage() {
     var currentPage = window.location.hash.replace(/#([^\\?]*).*/, "$1");
-    if (currentPage.length === 0 && this.routes.defaultRoute) {
+    if (currentPage.length == 0 &amp;&amp; this.routes.defaultRoute) {
       currentPage = this.routes.defaultRoute;
     }
     return currentPage;
@@ -1291,3 +1315,26 @@ class RouterComponent extends ModelComponent {
     }
   }
 }
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Component.html">Component</a></li><li><a href="Model.html">Model</a></li><li><a href="ModelComponent.html">ModelComponent</a></li><li><a href="RouterComponent.html">RouterComponent</a></li><li><a href="TreeComparator.html">TreeComparator</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Mon Mar 13 2017 12:29:03 GMT+0100 (CET)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

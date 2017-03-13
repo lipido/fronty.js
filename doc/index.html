@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Home</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Home</h1>
+
+    
+
+
+
+    
+
+
+    <h3> </h3>
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+    <section>
+        <article><h1>fronty.js</h1><p>A simple library for building Component-based Web user interfaces.</p>
+<p><strong>Note: This is an educational project (&lt;1000 lines of code). There are
+many libraries doing this for professional projects (e.g:
+<a href="http://emberjs.com">Ember</a>, <a href="http://angularjs.org">AngularJS</a>,
+<a href="https://vuejs.org">Vue.js</a>, <a href="https://facebook.github.io/react/">React</a>, etc.)</strong></p>
+<h2>Main concepts</h2><h3>Models</h3><p>Models are <a href="http://www.oodesign.com/observer-pattern.html">Observable</a> objects,
+that extends the class <code>Model</code>. In models you save your application's &quot;logic
+state&quot; (e.g.: list of todo items, current editing employee, current logged user,
+etc.).</p>
+<pre class="prettyprint source lang-javascript"><code>var myModel = new Model('mymodel');
+myModel.counter = 0;
+
+// update the model later
+myModel.set( () => myModel.counter++ );</code></pre><h3>Renderers</h3><p>Renderers allows you to maintain your HTML separated from your JavaScript code.
+A renderer is any function that returns an HTML string.</p>
+<p>A special type of renderers are those that takes a model and converts it into
+HTML. A very powerful library to create this function is
+<a href="http://handlebarsjs.com/">Handlebars</a>, since a Handlebars template is a valid
+renderer function for fronty.js (you can <a href="https://www.google.es/search?q=javascript+template+engines">find many
+more</a>). For example:</p>
+<pre class="prettyprint source lang-html"><code>&lt;div>&lt;span>Current counter: {{counter}}&lt;/span>&lt;button id=&quot;increase&quot;>Increase&lt;/button>&lt;/div></code></pre><p>If you compile this template with Handlebars, you get a valid renderer function
+that would be able to render the previous model, where <code>counter</code> is a property
+of the model.</p>
+<p>Note: renderers <strong>MUST</strong> return a piece of HTML with a single root element.</p>
+<h3>Components</h3><p>Components take a renderer function and puts its resulting HTML in the actual
+and visible document by making <em>as less changes as possible</em> changes in the
+document tree in order to increase performance. A component is rendered in place
+of a given HTML element identified by its <code>id</code>, so everything inside that node
+is responsibility of the component. Components can be re-rendered at any time
+so, if the renderer function returns a different content, the component will
+make the necessary changes in the current HTML.</p>
+<p>The most typical <code>Component</code> is <code>ModelComponent</code>, which receive a <code>Model</code>, and
+a renderer function able to take a model and generate HTML (e.g: a compiled
+Handlebars template). The component <em>observes</em> the model. If any change is made
+in the model, the component will re-render.</p>
+<pre class="prettyprint source lang-javascript"><code>var myModel = new Model('mymodel');
+myModel.counter = 0;
+var aTemplate = Handlebars.compile(
+  '&lt;div>&lt;span>Current counter: {{counter}}&lt;/span>&lt;button id=&quot;increase&quot;>Increase&lt;/button>&lt;/div>'
+);
+var myComponent = new ModelComponent(aTemplate, myModel, 'myapp');</code></pre><p>In the example, the component will be placed inside the element with
+<code>id=&quot;myapp&quot;</code>.</p>
+<p>In addition, you add event listeners to components (not directly to HTML nodes):</p>
+<pre class="prettyprint source lang-javascript"><code>myComponent.addEventListener('click', '#increase', () => {
+  //update the model
+  myModel.set( () => myModel.counter++ );
+});</code></pre><p>Finally, components do not render until you call <code>start()</code>.</p>
+<pre class="prettyprint source lang-javascript"><code>myComponent.start();</code></pre><p>Another special component is the <code>RouterComponent</code>, a class that is able to
+simulate &quot;multiple-pages&quot; inside a single-page application by using the hash
+part of the current url.</p>
+<h2>Hello World!</h2><p>Here you have a single page with a minimal code to see fronty.js working.</p>
+<pre class="prettyprint source lang-html"><code>&lt;!DOCTYPE html>
+&lt;html>
+  &lt;head>
+    &lt;meta charset=&quot;utf-8&quot;>
+    &lt;script src=&quot;https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js&quot;>&lt;/script>
+    &lt;script src=&quot;https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.6/handlebars.min.js&quot;>&lt;/script>
+    &lt;script src=&quot;js/fronty.js&quot;>&lt;/script>
+  &lt;/head>
+  &lt;body>
+    &lt;div id =&quot;myapp&quot;>Loading&lt;/div>
+    &lt;script>
+      $( ()=> { //wait for document ready
+
+        // Model
+        var myModel = new Model('mymodel');
+        myModel.counter = 0;
+
+        // Template
+        var aTemplate = Handlebars.compile(
+          '&lt;div>&lt;span>Current counter: {{counter}}&lt;/span>&lt;button id=&quot;increase&quot;>Increase&lt;/button>&lt;/div>'
+        );
+
+        // Component
+        var myComponent = new ModelComponent(aTemplate, myModel, 'myapp');
+        myComponent.addEventListener('click', '#increase', () => {
+          //update the model
+          myModel.set( () => myModel.counter++ );
+        });
+
+        // Start rendering
+        myComponent.start();
+      });
+    &lt;/script>
+  &lt;/body>
+&lt;/html></code></pre><p>This is a minimal example. The next thing should separate the templates from the
+JavaScript. You can:</p>
+<ol>
+<li><p><a href="http://handlebarsjs.com/precompilation.html">Precompile</a> your templates
+(best performance).</p>
+</li>
+<li><p>Retrieve this template from an external file
+(<code>templates/counter-template.hbs</code>) by using AJAX, compile it, and then pass it
+to the component. The following code is an example:</p>
+</li>
+</ol>
+<pre class="prettyprint source lang-javascript"><code>
+// a helper function to load an external text file
+function loadTextFile(url) {
+  return new Promise((resolve, reject) => {
+    $.get({
+      url: url,
+      cache: true,
+      dataType: 'text'
+    }).then((source) => {
+      resolve(source);
+    }).fail(() => reject());
+  });
+}
+
+Handlebars.templates = {};
+Promise.all([
+    // here we retrieve our template files, you can put here all the templates
+    loadTextFile('templates/counter-template.hbs').then((source) => Handlebars.templates.counter = Handlebars.compile(source))
+  ])
+  .then(() => { 
+    $(() => {
+      // once templates are loaded and the document is ready, it is safe to start
+      var myModel = new Model('mymodel');
+      myModel.counter = 0;
+
+      var myComponent = new ModelComponent(Handlebars.templates.counter, myModel, 'myapp');
+      myComponent.addEventListener('click', '#increase', () => {
+        //update the model
+        myModel.set( () => myModel.counter++ );
+      });
+
+      myComponent.start();
+    });
+  }).catch((err) => {
+    alert('FATAL: could not start app ' + err);
+  });</code></pre><p>The <code>template/counter-template.hbs</code> would be:</p>
+<pre class="prettyprint source lang-html"><code>&lt;span>Current counter: {{counter}}&lt;/span>&lt;button id=&quot;increase&quot;>Increase&lt;/button></code></pre><h2>Object oriented</h2><p>Models and Components are
+<a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Classes">classes</a>
+(ECMAScript 2015). It is recommended that you build your own Models and
+Components by extending these classes.</p>
+<p>For example:</p>
+<pre class="prettyprint source lang-javascript"><code>class Counter extends Model {
+  constructor() {
+    super('counter');
+    this.counter = 0;
+  }
+
+  increase() {
+    this.set( () => { this.counter++ });
+  }
+}
+
+class CounterComponent extends ModelComponent {
+  constructor(counterModel, node) {
+    super(Handlebars.templates.counter, counterModel, node);
+    this.counterModel = counterModel;
+
+    this.addEventListener('click', '#increase', () => {
+      //update the model
+      this.counterModel.increase();
+    });
+  }
+}</code></pre><h2>Nesting Components</h2><p>Components can also be composed one inside other for better modularity,
+reusability and performance by using
+<code>component.addChildComponent(childComponent)</code>. You can also place a special tag
+in parent components to create child components dynamically. For example:</p>
+<pre class="prettyprint source lang-html"><code>&lt;!-- parent template -->
+&lt;ul>
+  {{#each items}}
+  &lt;todoitemcomponent id=&quot;item-{{id}}&quot; key=&quot;item-{{id}}&quot; model=&quot;items[{{@index}}]&quot;>&lt;/todoitemcomponent>
+  {{/each}}
+&lt;/ul></code></pre><pre class="prettyprint source lang-html"><code>&lt;!-- child template -->
+&lt;li key=&quot;item-{{id}}&quot;>
+  {{description}}
+&lt;/li></code></pre><pre class="prettyprint source lang-javascript"><code>
+// parent component
+class TodoListComponent extends ModelComponent {
+  constructor(id, items) {
+    super(
+      Handlebars.compile(document.getElementById('todo-list-template').innerHTML),
+      items, id, 
+      ['TodoItemComponent']); // &lt;--- tags that create child components
+
+  }
+}
+
+// child items component
+class TodoItemComponent extends ModelComponent {
+  constructor(id, item) { // &lt;--- a component class with this constructor must be available
+  }
+}</code></pre><p>In the parent component, you have to indicate that the <code>&lt;todoitemcomponent&gt;</code> tag
+is a tag that should create child components dynamically, and pass them the
+model that the expression found in the attribute <code>model</code> evaluates to. Once the 
+child component are created, these tags are replaced.</p>
+<p>If you want to instantiate the child components by hand, you can override the
+<code>createChildComponent(childTag, modelItem, itemId)</code> function in the parent
+component. For example:</p>
+<pre class="prettyprint source lang-javascript"><code>class TodoListComponent extends Component {
+  constructor(id, items) {
+    super(
+      Handlebars.compile(document.getElementById('todo-list-template').innerHTML),
+      items, id, 
+      ['TodoItemComponent']); // &lt;--- tags that create child components
+
+  }
+  createModelChildModelComponent(childTag, childTagElement, itemId, modelItem) {
+    if (childTag === 'TodoItemComponent') {
+      return new TodoItemComponent(itemId, modelItem);
+    }
+  }
+}</code></pre><p>See an example in <a href="examples/todo-list.html">here</a>.</p>
+<h2>Technical details</h2><ul>
+<li>One-way binding.</li>
+<li>Component-based. Each part of the DOM is managed by a component. Components
+are nestable.</li>
+<li>No third-party libraries required.</li>
+<li>Template engine agnostic. Tested with <a href="http://handlebarsjs.com/">Handlebars</a>.</li>
+<li>Updates the DOM by Virtual DOM diff+patch (or &quot;Reconciliation&quot; as in
+<a href="https://facebook.github.io/react/">React</a>).</li>
+<li>Models are mutable and observed by components. Only components that observe a
+changing model are re-rendered, so you can control which part of the DOM is
+re-evaluated for changes.</li>
+</ul></article>
+    </section>
+
+
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="Component.html">Component</a></li><li><a href="Model.html">Model</a></li><li><a href="ModelComponent.html">ModelComponent</a></li><li><a href="RouterComponent.html">RouterComponent</a></li><li><a href="TreeComparator.html">TreeComparator</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Mon Mar 13 2017 12:29:03 GMT+0100 (CET)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

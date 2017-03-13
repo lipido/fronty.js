@@ -1,0 +1,21 @@
+{
+  "name": "fronty.js",
+  "description": "A simple library for building Component-based Web user interfaces.",
+  "main": "src/fronty.js",
+  "authors": [
+    "lipido <lipido@gmail.com>"
+  ],
+  "license": "LGPL",
+  "keywords": [
+    "component",
+    "framework"
+  ],
+  "homepage": "http://github.com/lipido/fronty.js",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}

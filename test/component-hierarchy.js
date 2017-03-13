@@ -25,7 +25,7 @@ describe('Component', () => {
   
   it('should allow to not indicate the id in the root elem of the template', () => {
     var realRenderer = () => '<div><p id="greetings">foo</p></div>';
-    var renderer = () => realRenderer()
+    var renderer = () => realRenderer();
     
     var component = new Component( renderer, 'componentId');
 
@@ -52,7 +52,7 @@ describe('Component', () => {
   
   it('should not touch child components on parent update', () => {
     var realRenderer = () => '<div id="componentId"><p id="modelvalue">foo</p><div id="childId"></div></div>';
-    var renderer = () => realRenderer()
+    var renderer = () => realRenderer();
     
     var parent = new Component(renderer, 'componentId');
     var child = new Component(() => '<div id="childId">child!</div>', 'childId');

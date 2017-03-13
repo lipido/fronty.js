@@ -32,13 +32,13 @@ describe('Component', () => {
 
   it('should update a single change on re-render', () => {
     
-    var realRenderer = () => '<div><p id="greetings">foo</p></div>'
-    var renderer = () => realRenderer()
+    var realRenderer = () => '<div><p id="greetings">foo</p></div>';
+    var renderer = () => realRenderer();
     var component = new Component(renderer, 'componentId');
     
     component.start();
     
-    var realRenderer = () => '<div><p id="greetings">bar</p></div>'
+    realRenderer = () => '<div><p id="greetings">bar</p></div>';
     
     component.render();
     
@@ -47,8 +47,8 @@ describe('Component', () => {
 
   
   it('should remove nodes after re-render', () => {
-    var realRenderer = () => '<div id="componentId">hi!</div>'
-    var renderer = () => realRenderer()
+    var realRenderer = () => '<div id="componentId">hi!</div>';
+    var renderer = () => realRenderer();
     
     var component = new Component(renderer, 'componentId');
 
@@ -56,7 +56,7 @@ describe('Component', () => {
     
     expect(document.getElementById('componentId').childNodes.length).toBe(1);
 
-    realRenderer = () => '<div id="componentId"></div>'
+    realRenderer = () => '<div id="componentId"></div>';
     
     component.render();
     
@@ -71,7 +71,7 @@ describe('Component', () => {
     ' <p key="item-2" class="item">item-2</p> '+
     ' <p key="item-4" class="item">item-4</p> '+
     '</div>';
-    var renderer = () => realRenderer()
+    var renderer = () => realRenderer();
     
     var component = new Component(renderer, 'componentId');
 
@@ -97,7 +97,7 @@ describe('Component', () => {
     var realRenderer = () => '<div id="componentId">'+
     '<p id="donottouch">Do not touch</p><p class="item">foo</p>'+
     '</div>';
-    var renderer = () => realRenderer()
+    var renderer = () => realRenderer();
     
     var component = new Component(renderer, 'componentId');
 
@@ -120,7 +120,7 @@ describe('Component', () => {
     //but the previous sibling is not touched
     expect(shouldNotBeTouched1).toBe(document.getElementById('donottouch'));
     expect(shouldNotBeTouched2).toBe(document.getElementsByClassName('item')[0]);
-  })
+  });
 
   it('should not touch unaffected childrens in a changed, but key-based, list of nodes', () => {
     var realRenderer = () => '<div id="componentId">'+
@@ -128,7 +128,7 @@ describe('Component', () => {
     ' <p key="item-2" class="item">item-2</p> '+
     ' <p key="item-4" class="item">item-4</p> '+
     '</div>';
-    var renderer = () => realRenderer()
+    var renderer = () => realRenderer();
     
     var component = new Component(renderer, 'componentId');
 
@@ -156,7 +156,7 @@ describe('Component', () => {
     ' <p key="item-2" class="item">item-2</p> '+
     ' <p key="item-4" class="item">item-4</p> '+
     '</div>';
-    var renderer = () => realRenderer()
+    var renderer = () => realRenderer();
     
     var component = new Component(renderer, 'componentId');
 
@@ -177,26 +177,28 @@ describe('Component', () => {
   });
   
   it('should work well with mixed key and non-key elements', () => {
-    var realRenderer = () =>{
+    var realRenderer = () => {
         return '<div><li key="1"></li><p>Hello</p><li key="3"></li></div>';
-    }
+    };
     
     var renderer = () => {
       return realRenderer();
-    }
+    };
+    
     var component = new Component(renderer, 'componentId');
     
     component.start();
     expect(document.getElementById('componentId').innerHTML).toBe('<li key="1"></li><p>Hello</p><li key="3"></li>');  
-    realRenderer = () =>{
+    realRenderer = () => {
        return '<div><li key="0"></li><p>Bye</p><li key="1"></li></div>';
-    }
+    };
+    
     component.render();
     expect(document.getElementById('componentId').innerHTML).toBe('<li key="0"></li><p>Bye</p><li key="1"></li>');  
    
-    realRenderer = () =>{
+    realRenderer = () => {
        return '<div><li key="0"></li><p>Bar</p><li key="1"></li></div>';
-    }
+    };
     
     component.render();
     expect(document.getElementById('componentId').innerHTML).toBe('<li key="0"></li><p>Bar</p><li key="1"></li>');  

@@ -23,8 +23,8 @@ describe('Component', () => {
   it('should allow child tags', () => {
     
 
-    var realRenderer = () => '<div id="componentId"><ChildComponent id="child-0"></ChildComponent></div>'
-    var renderer = () => realRenderer()
+    var realRenderer = () => '<div id="componentId"><ChildComponent id="child-0"></ChildComponent></div>';
+    var renderer = () => realRenderer();
     
     var parent = new Component(
       renderer,
@@ -41,18 +41,18 @@ describe('Component', () => {
     expect(document.getElementById('child-0').innerHTML).toBe('foo');
     expect(parent.getChildComponents().length).toBe(1);
 
-    var realRenderer = () => '<div id="componentId"></div>'
+    realRenderer = () => '<div id="componentId"></div>';
     parent.render();
     
     expect(parent.getChildComponents().length).toBe(0);
     
     
-    var realRenderer = () => '<div id="componentId"><ChildComponent id="child-0"></ChildComponent></div>'
+    realRenderer = () => '<div id="componentId"><ChildComponent id="child-0"></ChildComponent></div>';
     parent.render();
     
     expect(parent.getChildComponents().length).toBe(1);
 
-    var realRenderer = () => '<div id="componentId"><ChildComponent id="child-0"></ChildComponent><ChildComponent id="child-1"></ChildComponent></div>'
+    realRenderer = () => '<div id="componentId"><ChildComponent id="child-0"></ChildComponent><ChildComponent id="child-1"></ChildComponent></div>';
     parent.render();
 
     expect(parent.getChildComponents().length).toBe(2);
@@ -61,8 +61,8 @@ describe('Component', () => {
   
 
   it('should autodetect child component classes on child tags', () => {
-    var realRenderer = () => '<div id="componentId"><ChildComponent id="child-0"></ChildComponent><ChildComponent id="child-1"></ChildComponent></div>'
-    var renderer = () => realRenderer()
+    var realRenderer = () => '<div id="componentId"><ChildComponent id="child-0"></ChildComponent><ChildComponent id="child-1"></ChildComponent></div>';
+    var renderer = () => realRenderer();
 
     //ChildComponent class is defined in global scope (see start of this file)
     var parent = new Component(
@@ -76,7 +76,7 @@ describe('Component', () => {
     expect(document.getElementById('child-1').innerHTML).toBe('child-1');
     expect(parent.getChildComponents().length).toBe(2);
 
-    realRenderer = () => '<div id="componentId"></div>'
+    realRenderer = () => '<div id="componentId"></div>';
 
     parent.render();
     

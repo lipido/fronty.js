@@ -121,7 +121,7 @@ describe('ModelComponent', () => {
     //but the previous sibling is not touched
     expect(shouldNotBeTouched1).toBe(document.getElementById('donottouch'));
     expect(shouldNotBeTouched2).toBe(document.getElementsByClassName('item')[0]);
-  })
+  });
 
 
 
@@ -160,7 +160,7 @@ describe('ModelComponent', () => {
     expect(parent.getChildComponents().length).toBe(1);
 
     model.set(() => {
-      model.items.length = 0
+      model.items.length = 0;
     });
 
     expect(parent.getChildComponents().length).toBe(0);
@@ -218,7 +218,7 @@ describe('ModelComponent', () => {
     expect(parent.getChildComponents().length).toBe(2);
 
     model.set(() => {
-      model.items.length = 0
+      model.items.length = 0;
     });
 
     expect(parent.getChildComponents().length).toBe(0);
