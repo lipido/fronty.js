@@ -951,7 +951,32 @@ class Model {
  * given {@link Model|model} object changes. This model object is also passed to this
  * Component's {@link Component#renderer|renderer function} each time this
  * Component is rendered.
- * 
+ *
+ * @example
+ * <!-- html page -->
+ * <body>
+ *  <div id="mycomponent"></div>
+ * </body>
+ *
+ * @example
+ * // Javascript
+ * // Model
+ * var model = new Model();
+ * model.counter = 0;
+ *
+ * // The ModelComponent to render the Model
+ * var component = new ModelComponent(
+ *  (m) => '<div>Counter: <span>'+m.counter+'</span></div>', // renderer function
+ *  model, //the model
+ *  'mycomponent' // HTML element id
+ *  );
+ *
+ * component.start(); // first render
+ *
+ * // Make changes in Model to fire re-renders
+ * setInterval(() => {
+ *    model.set( () => model.counter++); // model update -> automatic re-render!
+ * }, 1000);
  * @extends Component
  */
 class ModelComponent extends Component {
