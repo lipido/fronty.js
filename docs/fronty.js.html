@@ -68,7 +68,7 @@
  * }, 1000);
  */
 class Component {
-  
+
   /**
    * Creates a new Component.
    *
@@ -79,7 +79,7 @@ class Component {
    * @param {Array.&lt;String>} [childTags] An optional Array of strings of custom-tags for dynamically created child Components.
    */
   constructor(renderer, htmlNodeId, childTags) {
-    
+
     /**
      * The renderer function.
      *
@@ -88,7 +88,7 @@ class Component {
      * @default null
      */
     this.renderer = renderer;
-    
+
     /**
      * The HTML element id where it renders into.
      * @name Component#htmlNodeId
@@ -96,7 +96,7 @@ class Component {
      * @default null
      */
     this.htmlNodeId = htmlNodeId;
-    
+
     /**
      * The optional name of custom element tags where child Components will
      * be created dynamically.&lt;br>
@@ -109,8 +109,8 @@ class Component {
      * @type String
      * @default empty array
      */
-    this.childTags = (childTags)? childTags : [];
-    
+    this.childTags = (childTags) ? childTags : [];
+
     // do not render until the component is started with start()
     /**
      * Whether this Component is stopped.&lt;br>
@@ -122,7 +122,7 @@ class Component {
      * @default true
      */
     this.stopped = true;
-    
+
     /**
      * The event listeners that this Component is managing, arranged by the HTML
      * query selector. See {@link Component#addEventListener|addEventListener()}.
@@ -131,7 +131,7 @@ class Component {
      * @type {Object.&lt;string, {callback: Function, eventType: String}>}
      */
     this.eventListeners = {};
-    
+
     // Currently installed event listeners by real DOM nodes (private)
     this._listeners = [];
 
@@ -142,7 +142,7 @@ class Component {
      * @type Array.&lt;Component>
      */
     this.childComponents = [];
-    
+
     /**
      * The child components, arranged by their HTML element id.
      *
@@ -163,7 +163,7 @@ class Component {
   getHtmlNodeId() {
     return this.htmlNodeId;
   }
-  
+
   /**
    * Sets the HTML element id where this Component should render.
    *
@@ -192,7 +192,11 @@ class Component {
     this.childComponents.push(component);
     this.childComponentIds[component.getHtmlNodeId()] = component;
 
-    this.stopped ? component.stop() : component.start();
+    if (this.stopped) {
+      component.stop();
+    } else {
+      component.start();
+    }
 
     component.render();
   }
@@ -218,20 +222,20 @@ class Component {
    * @see {@link Component#childTags}
    */
   createChildComponent(tagName, childTagElement, id) {
-    var constructorFunction = eval('' + tagName);
+    var constructorFunction = eval('' + tagName); //jshint ignore:line
 
     if (constructorFunction instanceof Function) {
       return new constructorFunction(id);
     }
   }
-  
+
   /**
    * Removes a child Component from this Component.&lt;br>
    *
    * After the child removal, &lt;em>this&lt;/em> component will re-render.
    *
    * @param {Component} component The child Component.
-   */  
+   */
   removeChildComponent(component) {
     var index = this.childComponents.indexOf(component);
 
@@ -270,7 +274,7 @@ class Component {
   getChildComponent(id) {
     return this.childComponentIds[id];
   }
-  
+
   // rendering
   /**
    * Render this Component, which consists in:
@@ -307,14 +311,14 @@ class Component {
 
       /* alternative via parse. Slower in tests:  https://jsperf.com/domparser-vs-innerhtml-vs-createhtmldocument/4 */
       //var newTree = (new DOMParser()).parseFromString(htmlContents, "text/html").body.childNodes[0];
-      
+
       // copy id to the root element
-      if (newTree.nodeType === Node.ELEMENT_NODE &amp;&amp; newTree.getAttribute('id') == null) {
+      if (newTree.nodeType === Node.ELEMENT_NODE &amp;&amp; newTree.getAttribute('id') === null) {
         newTree.setAttribute('id', this.getHtmlNodeId());
       }
 
       // TODO: create here a hook to preprocess newTree before comparing
-      
+
       var patches = TreeComparator.diff(currentTree, newTree, (node1, node2) => {
         // skip comparisons on our child's Component slots (child components are the responsible ones) 
         // the parent component, once re-rendered, will see its child slots empty again, but
@@ -345,7 +349,7 @@ class Component {
    * Stopped Components do not render. Once this Component 
    */
   stop() {
-    if (this.stopped == false) {
+    if (this.stopped === false) {
       this.stopped = true;
 
       this.childComponents.forEach((child) => {
@@ -410,21 +414,21 @@ class Component {
    */
   beforeRender() { //hook
   }
-  
+
   /**
    * Hook function called by this Component after rendering. As a hook, it is
    * intended to be overriden by subclasses.
    */
   afterRender() { //hook
   }
-  
+
   /**
    * Hook function called by this Component just after start. As a hook, it is
    * intended to be overriden by subclasses.
    */
   onStart() { //hook
   }
-  
+
   /**
    * Hook function called by this Component just after stop. As a hook, it is
    * intended to be overriden by subclasses.
@@ -436,7 +440,7 @@ class Component {
   _restoreChildNodes(savedChildNodes) {
     this.childComponents.forEach((childComponent) => {
       var childId = childComponent.getHtmlNodeId();
-      if (this._getChildNode(childId) != null &amp;&amp; savedChildNodes[childId] != null) {
+      if (this._getChildNode(childId) !== null &amp;&amp; childId in savedChildNodes) {
         var currentComponentNode = this._getChildNode(childId);
         if (savedChildNodes[childId] != currentComponentNode) {
           currentComponentNode.parentNode.replaceChild(savedChildNodes[childId], currentComponentNode);
@@ -444,17 +448,17 @@ class Component {
       }
     });
   }
-  
+
   _saveChildNodes() {
     var savedChildNodes = [];
     this.childComponents.forEach((childComponent) => {
       var childId = childComponent.getHtmlNodeId();
-      if (this._getChildNode(childId) != null) {
+      if (this._getChildNode(childId) !== null) {
         savedChildNodes[childId] = this._getChildNode(childId);
       }
     });
     return savedChildNodes;
-    
+
   }
   _getComponentNode() {
     return document.getElementById(this.getHtmlNodeId());
@@ -519,29 +523,29 @@ class Component {
         }
       }
 
-      for (var i = this.childComponentsByTag[childTag].length - 1; i >= 0; i--) {
-        var childComponent = this.childComponentsByTag[childTag][i];
+      for (var j = this.childComponentsByTag[childTag].length - 1; j >= 0; j--) {
+        var childComponent = this.childComponentsByTag[childTag][j];
         if (childIds.indexOf(childComponent.getHtmlNodeId()) === -1 &amp;&amp;
           this._getComponentNode().querySelector('#' + childComponent.getHtmlNodeId()) === null) {
 
           this.removeChildComponent(childComponent);
-          this.childComponentsByTag[childTag].splice(i, 1);
+          this.childComponentsByTag[childTag].splice(j, 1);
         }
       }
     });
   }
 
   // event listeners "private" methods
-  
+
   _updateEventListeners() {
     this._clearAllEventListeners();
-    for (var nodesQuery in this.eventListeners) {
+    Object.getOwnPropertyNames(this.eventListeners).forEach((nodesQuery) => {
       this.eventListeners[nodesQuery].forEach((listenerSpec) => {
         console.log('Component [#' + this.htmlNodeId + ']: adding listener ' + nodesQuery);
         this._addEventListener(
           nodesQuery, listenerSpec.eventType, listenerSpec.callback);
       });
-    }
+    });
   }
 
   _clearAllEventListeners() {
@@ -550,16 +554,16 @@ class Component {
         console.log('Component [#' + this.htmlNodeId + ']: removing listener');
         listenerSpec.node.removeEventListener(
           listenerSpec.eventType, listenerSpec.callback);
-        });
-        this._listeners = [];
-    } 
+      });
+      this._listeners = [];
+    }
   }
 
   _addEventListener(nodesQuery, eventType, callback) {
     if (!this._listeners) {
       this._listeners = [];
     }
-    
+
     if (this.htmlNodeId &amp;&amp; this._getComponentNode()) {
       this._getComponentNode().querySelectorAll(nodesQuery).forEach((element) => {
         element.addEventListener(eventType, callback);
@@ -568,7 +572,7 @@ class Component {
           eventType: eventType,
           callback: callback
         });
-      })
+      });
     }
   }
 }
@@ -580,7 +584,7 @@ class Component {
  * &lt;em>patch&lt;/em>
  */
 class TreeComparator {
-  
+
   /**
    * Compute the difference between two DOM trees, giving their root nodes.&lt;br>
    *
@@ -615,7 +619,7 @@ class TreeComparator {
 
     var result = [];
 
-    if (node1 == null ||
+    if (node1 === null ||
       node1.tagName !== node2.tagName ||
       node1.nodeType !== node2.nodeType ||
       (
@@ -651,7 +655,7 @@ class TreeComparator {
     var insertions = 0;
     var deletions = 0;
     var child1Array = Array.from(node1.childNodes); //copy node1 childs to an array, sinde we will do some swaps here, but we do not want to do them in DOM now
-    node1.childNodes.forEach((node) => {})
+
     while (child1pos &lt; node1.childNodes.length &amp;&amp; child2pos &lt; node2.childNodes.length) {
       var child1 = child1Array[child1pos];
       var child2 = node2.childNodes[child2pos];
@@ -696,7 +700,7 @@ class TreeComparator {
 
       if (key1 !== key2) {
         if ((key1 in keyElementIndexNode2) &amp;&amp; (key2 in keyElementIndexNode1)) {
-          
+
           //both nodes are in the initial and final result, so we only need to swap them
           result.push({
             mode: 'swap-nodes',
@@ -733,12 +737,10 @@ class TreeComparator {
 
       } else {
         // both keys are equals (same key OR both null)
-        var partial =
-          TreeComparator.diff(
-            child1,
-            child2,
-            comparePolicy);
-        result.push.apply(result, partial);
+        result.push.apply(result, TreeComparator.diff(
+          child1,
+          child2,
+          comparePolicy));
 
         child1pos++;
         child2pos++;
@@ -753,11 +755,11 @@ class TreeComparator {
         });
       }
     } else if (child2pos &lt; node2.childNodes.length) {
-      for (var i = child2pos; i &lt; node2.childNodes.length; i++) {
+      for (var j = child2pos; j &lt; node2.childNodes.length; j++) {
         result.push({
           mode: 'append-child',
           toReplace: node1,
-          replacement: node2.childNodes[i]
+          replacement: node2.childNodes[j]
         });
       }
     }
@@ -841,21 +843,22 @@ class TreeComparator {
       var toReplace = patch.toReplace;
       var replacement = patch.replacement;
       if (patch.mode === 'attributes') {
+        var attribute = null;
         for (var i = 0; i &lt; replacement.attributes.length; i++) {
-          var attribute = replacement.attributes[i];
+          attribute = replacement.attributes[i];
           if (attribute.name === 'value' &amp;&amp;
             toReplace.value != attribute.value) {
             toReplace.value = attribute.value;
           }
           if (attribute.name === 'checked') {
             toReplace.checked =
-              (attribute.checked != false) ? true : false;
+              (attribute.checked !== false) ? true : false;
           }
           toReplace.setAttribute(attribute.name, attribute.value);
         }
 
-        for (var i = toReplace.attributes.length - 1; i >= 0; i--) {
-          var attribute = patch.toReplace.attributes[i];
+        for (var j = toReplace.attributes.length - 1; j >= 0; j--) {
+          attribute = patch.toReplace.attributes[j];
           if (!replacement.hasAttribute(attribute.name)) {
             if (attribute.name === 'checked') {
               toReplace.checked = false;
@@ -891,7 +894,7 @@ class TreeComparator {
  *
  */
 class Model {
-  
+
   /**
    * Creates an instance of a Model.
    *
@@ -903,7 +906,7 @@ class Model {
      * via {@link Model#set|set()} method.
      */
     this.observers = [];
-    
+
     /**
      * The name of the model.
      * @type {String}
@@ -941,7 +944,7 @@ class Model {
       observer(this, hint);
     });
   }
-  
+
   /**
    * Adds an observer function to this Model.&lt;br>
    * 
@@ -1008,7 +1011,7 @@ class ModelComponent extends Component {
       this.models = [model];
     } else if (model instanceof Array) {
       model.forEach((model) => {
-        if (!model instanceof Model) {
+        if (!(model instanceof Model)) {
           throw 'Component [' + this.htmlNodeId + ']: the model must inherit Model';
         }
       });
@@ -1033,7 +1036,7 @@ class ModelComponent extends Component {
   // lifecycle management
   stop() {
 
-    if (this.stopped == false) {
+    if (this.stopped === false) {
       this.models.forEach((model) => {
         model.removeObserver(this);
       });
@@ -1057,7 +1060,7 @@ class ModelComponent extends Component {
     });
     return context;
   }
-  
+
   /** 
    * Overrides the child Component creation by also considering a "model"
    * attribute in the tag.&lt;br>
@@ -1076,12 +1079,13 @@ class ModelComponent extends Component {
    */
   createChildComponent(tagName, childTagElement, id) {
     var oneModelObject = this._mergeModelInOneObject();
+    var modelItem = null;
     if (childTagElement.getAttribute('model')) {
-      var modelItem = eval('oneModelObject.' + childTagElement.getAttribute('model'));
+      modelItem = eval('oneModelObject.' + childTagElement.getAttribute('model')); //jshint ignore:line
     }
     return this.createChildModelComponent(tagName, childTagElement, id, modelItem);
   }
-  
+
   /**
    * This method searches for a class with the name of the childTagElement parameter
    * with a
@@ -1097,7 +1101,7 @@ class ModelComponent extends Component {
    * @return {Component} The new created child component.
    */
   createChildModelComponent(tagName, childTagElement, id, modelItem) {
-    var constructorFunction = eval('' + tagName);
+    var constructorFunction = eval('' + tagName); //jshint ignore:line
 
     if (constructorFunction instanceof Function) {
       return new constructorFunction(id, modelItem);
@@ -1144,7 +1148,7 @@ class ModelComponent extends Component {
  * @extends ModelComponent
  */
 class RouterComponent extends ModelComponent {
-  
+
   /**
    * Creates a new router.&lt;br>
    * 
@@ -1157,8 +1161,8 @@ class RouterComponent extends ModelComponent {
     var routerModel = new Model('RouterModel');
 
     if (model instanceof Array) {
-      model.push(routerModel)
-    } else if (model != null) {
+      model.push(routerModel);
+    } else if (model !== null) {
       model = [routerModel, model];
     } else {
       model = routerModel;
@@ -1194,7 +1198,7 @@ class RouterComponent extends ModelComponent {
       this._goToCurrentPage();
     }
   }
-  
+
   /**
    * Sets the router configuration. This configuration basically maps
    * URL hashes to Components that should be showed.
@@ -1277,7 +1281,7 @@ class RouterComponent extends ModelComponent {
 
   _calculateCurrentPage() {
     var currentPage = window.location.hash.replace(/#([^\\?]*).*/, "$1");
-    if (currentPage.length == 0 &amp;&amp; this.routes.defaultRoute) {
+    if (currentPage.length === 0 &amp;&amp; this.routes.defaultRoute) {
       currentPage = this.routes.defaultRoute;
     }
     return currentPage;
@@ -1331,7 +1335,7 @@ class RouterComponent extends ModelComponent {
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Mon Mar 13 2017 12:29:03 GMT+0100 (CET)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Mon Mar 13 2017 13:35:53 GMT+0100 (CET)
 </footer>
 
 <script> prettyPrint(); </script>
