@@ -18,6 +18,9 @@ that extends the class `Model`. In models you save your application's "logic
 state" (e.g.: list of todo items, current editing employee, current logged user,
 etc.).
 
+In order to make changes in a model, you have to use the `set` method, which 
+will notify all observers that a change has been made.
+
 ```javascript
 var myModel = new Model('mymodel');
 myModel.counter = 0;
@@ -31,13 +34,16 @@ Renderers allows you to maintain your HTML separated from your JavaScript code.
 A renderer is any function that returns an HTML string.
 
 A special type of renderers are those that takes a model and converts it into
-HTML. A very powerful library to create this function is
-[Handlebars](http://handlebarsjs.com/), since a Handlebars template is a valid
-renderer function for fronty.js (you can [find many
+HTML (see `ModelComponent`, afterwards). A very powerful library to create this
+function is [Handlebars](http://handlebarsjs.com/), since a Handlebars template
+is a valid renderer function for fronty.js (you can [find many
 more](https://www.google.es/search?q=javascript+template+engines)). For example:
 
 ```html
-<div><span>Current counter: {{counter}}</span><button id="increase">Increase</button></div>
+<div>
+  <span>Current counter: {{counter}}</span>
+  <button id="increase">Increase</button>
+</div>
 ```
 
 If you compile this template with Handlebars, you get a valid renderer function
@@ -48,12 +54,13 @@ Note: renderers **MUST** return a piece of HTML with a single root element.
 
 ### Components
 Components take a renderer function and puts its resulting HTML in the actual
-and visible document by making *as less changes as possible* changes in the
-document tree in order to increase performance. A component is rendered in place
-of a given HTML element identified by its `id`, so everything inside that node
-is responsibility of the component. Components can be re-rendered at any time
-so, if the renderer function returns a different content, the component will
-make the necessary changes in the current HTML.
+and visible document by making *as less changes as possible* in the document
+tree in order to increase performance and preserve interactive element's
+status (such as form input elements). A component is rendered in place of a
+given HTML element identified by its `id`, so everything inside that node is
+responsibility of the component. Components can be re-rendered at any time so,
+if the renderer function returns a different content, the component will make
+the necessary changes in the current HTML.
 
 The most typical `Component` is `ModelComponent`, which receive a `Model`, and
 a renderer function able to take a model and generate HTML (e.g: a compiled
@@ -290,13 +297,14 @@ class TodoListComponent extends Component {
 See an example in [here](examples/todo-list.html).
 
 ## Technical details
-- One-way binding.
-- Component-based. Each part of the DOM is managed by a component. Components
+- One-way binding. Changes in models are reflected in HTML, but changes in 
+  HTML interactive elements are not reflected in models automatically.
+- Component-based. Each part of the DOM is rendered by a component. Components
   are nestable.
 - No third-party libraries required.
 - Template engine agnostic. Tested with [Handlebars](http://handlebarsjs.com/).
-- Updates the DOM by Virtual DOM diff+patch (or "Reconciliation" as in
+- Updates the DOM by diff+patch (similar to "Reconciliation" in
   [React](https://facebook.github.io/react/)).
-- Models are mutable and observed by components. Only components that observe a
-  changing model are re-rendered, so you can control which part of the DOM is
-  re-evaluated for changes.
+- Models are mutable and observed by components. Only those ModelComponent
+  objects that observe a changing model are re-rendered, so you can control
+  which part of the DOM is re-evaluated for changes.

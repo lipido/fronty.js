@@ -7,13 +7,14 @@
  *  Class representing a component, which is an object whose responsibilities
  *  are:
  *  <ul>
- *    <li>Render the HTML results of a provided <em>renderer function</em> inside a
- *    specified element of the showing document, making as less DOM changes as
- *    possible.</li>
+ *    <li>Render the HTML results of a provided
+ *    {@link Component#renderer|renderer function} inside a specified element of
+ *   the showing document, making as less DOM changes as possible.</li>
  *    <li>Manage nested child components. Child components are components which
  *      render in an element inside this component. When <em>this</em> Component
  *      re-renders, it restores its child's subtrees on their places. Child Components
- *      can be added manually or created dynamically by <em>this</em> Component via
+ *      can be added manually (See {@link Component#addChildComponent}) or created
+ *      dynamically by <em>this</em> Component via 
  *      custom tag elements (See {@link Component#childTags}).</li>
  *    <li>Manage event listeners, restoring them each re-rendering.</li>
  *  </ul>
@@ -57,6 +58,8 @@ class Component {
      *
      * @name Component#renderer
      * @type Function
+     * @callback
+     * @return {String} HTML content. It <strong>must</strong> return a single root element.
      * @default null
      */
     this.renderer = renderer;
@@ -994,9 +997,14 @@ class ModelComponent extends Component {
    * @param {Array.<String>} [childTags] An optional Array of strings of custom-tags for dynamically created child Components.
    */
   constructor(modelRenderer, model, htmlNodeId, childTags) {
-    super(() => {
-      return modelRenderer(this._mergeModelInOneObject());
-    }, htmlNodeId, childTags);
+    super(
+      // the renderer function wraps the modelRenderer function in order to
+      // pass the model to the modelRenderer.
+      () => {
+        return modelRenderer(this._mergeModelInOneObject());
+      },
+      htmlNodeId, childTags
+    );
 
     if (!model) {
       /**
