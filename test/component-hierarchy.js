@@ -20,7 +20,7 @@ describe('Component', () => {
     
     parent.start();
     
-    expect(document.getElementById('childId').innerHTML).toBe('child!');
+    expect(document.getElementById('childId').textContent).toBe('child!');
   });
   
   it('should allow to not indicate the id in the root elem of the template', () => {
@@ -34,7 +34,7 @@ describe('Component', () => {
     
     component.render();
 
-    expect(document.getElementById('greetings').innerHTML).toBe('bar');
+    expect(document.getElementById('greetings').textContent).toBe('bar');
     expect(document.getElementById('componentId')).not.toBe(null);
   });
   
@@ -45,8 +45,8 @@ describe('Component', () => {
     parent.addChildComponent(child);
     
     parent.start();
-    
-    expect(document.getElementById('childId').innerHTML).toBe('child!');
+    //
+    expect(document.getElementById('childId').textContent).toBe('child!');
   });
 
   
@@ -61,8 +61,8 @@ describe('Component', () => {
     
     parent.start();
     
-    expect(document.getElementById('modelvalue').innerHTML).toBe('foo');
-    expect(document.getElementById('childId').innerHTML).toBe('child!');
+    expect(document.getElementById('modelvalue').textContent).toBe('foo');
+    expect(document.getElementById('childId').textContent).toBe('child!');
     
     var childRoot = document.getElementById('childId');
     
@@ -71,7 +71,29 @@ describe('Component', () => {
     parent.render();
     
     expect(childRoot).toBe(document.getElementById('childId'));
-    expect(document.getElementById('modelvalue').innerHTML).toBe('bar');
+    expect(document.getElementById('modelvalue').textContent).toBe('bar');
 
   });
+  //
+  it('should allow to move child components on parent', () => {
+    var realRenderer = () => '<div id="componentId"><p id="modelvalue">foo</p><div id="childId"></div></div>';
+    var renderer = () => realRenderer();
+    
+    var parent = new Component(renderer, 'componentId');
+    var child = new Component(() => '<div id="childId">child!</div>', 'childId');
+    
+    parent.addChildComponent(child);
+    
+    parent.start();
+    
+    expect(document.getElementById('modelvalue').textContent).toBe('foo');
+    expect(document.getElementById('childId').textContent).toBe('child!');
+    
+    realRenderer = () => '<div id="componentId"><div id="childId"></div></div>';
+    
+    parent.render();
+    
+    expect(document.getElementById('childId').textContent).toBe('child!');
+    
+  });  
 });

@@ -40,7 +40,7 @@ describe('RouterComponent', () => {
     
     router.start();
     
-    expect(document.getElementById('currentpage').innerHTML).toBe('Page1');
+    expect(document.getElementById('currentpage').textContent).toBe('Page1');
   });
   
   it('should change the route', () => {
@@ -63,12 +63,17 @@ describe('RouterComponent', () => {
     
     router.start();
     
-    expect(document.getElementById('currentpage').innerHTML).toBe('Page1');
+    expect(document.getElementById('currentpage').textContent).toBe('Page1');
     
-    window.location.href='#page2';    
+    window.location.href='#page2';
     routerHashChangeCallback();
     
-    expect(document.getElementById('currentpage').innerHTML).toBe('Page2');
+    expect(document.getElementById('currentpage').textContent).toBe('Page2');
+    
+    window.location.href='#page';
+    routerHashChangeCallback();
+    
+    expect(document.getElementById('currentpage').textContent).toBe('Page1');
     
   });
   

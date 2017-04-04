@@ -70,6 +70,7 @@
  */
 class Component {
 
+
   /**
    * Creates a new Component.
    *
@@ -153,6 +154,16 @@ class Component {
      * @type Object.&lt;string, Component>
      */
     this.childComponentIds = {};
+
+
+    this._previousVirtualDOMHTML = null;
+    this._generatedIdsCounter = 0;
+    this._realDOMNodeMapping = {
+      elements: {},
+      text_nodes: {},
+      comment_nodes: {}
+    };
+    this._mappingIdsOfChilds = {};
   }
 
   /**
@@ -177,6 +188,7 @@ class Component {
    */
   setHtmlNodeId(htmlNodeId) {
     this.htmlNodeId = htmlNodeId;
+    this._resetVirtualDOM();
   }
 
   // child management
@@ -284,10 +296,12 @@ class Component {
    * &lt;ol>
    * &lt;li>Save the child Component DOM trees, because they may be moved to another place in the DOM.&lt;/li>
    * &lt;li>Call the {@link Component#renderer|renderer function}.&lt;/li>
-   * &lt;li>Calculate the differences between the current DOM of this Component
+   * &lt;li>Calculate the differences between the previous "virtual" DOM of this Component
    * and the new "virtual" DOM provided by the renderer function, skipping those
    * elements where child nodes are rendering.&lt;/li>
-   * &lt;li>Patch the current DOM with the previously computed differences.&lt;/li>
+   * &lt;li>Patch the real DOM with the previously computed differences.&lt;/li>
+   * &lt;li>Patch the previous "virtual" DOM with the previously computed differences,
+   * and save it as the next previous "virtual" DOM.&lt;/li>
    * &lt;li>Restore the child Components in their new places if they where moved to another
    * part in the DOM.&lt;/li>
    * &lt;li>Restore event listeners in their corresponding elements, because 
@@ -298,34 +312,66 @@ class Component {
    */
   render() {
     this._doRender((htmlContents) => {
-
       // save child component subtrees
       var savedChildNodes = this._saveChildNodes();
 
-      // compare
-      var currentTree = this._getComponentNode();
+      // update real node mappings of children//
+      Object.keys(this._realDOMNodeMapping.elements).forEach((frontyid) => {
+        if (this._realDOMNodeMapping.elements[frontyid].hasAttribute('id') &amp;&amp;
+          this.childComponentIds[this._realDOMNodeMapping.elements[frontyid].getAttribute('id')] !== undefined
+        ) {
+          this._realDOMNodeMapping.elements[frontyid] = this._getChildNode(this._realDOMNodeMapping.elements[frontyid].getAttribute('id'));
+        }
+      });
 
+      var currentTree = null;
+      var firstRender = this._previousVirtualDOMHTML === null;
+      if (firstRender) {
+        // first render, clean childs (maybe childs have some fronty comments that could interfere)
+        currentTree = this._getComponentNode();
+        currentTree.innerHTML = '';
+      } else {
+        // re-render. Restore the previous tree
+        currentTree = document.createElement('div'); //dummy element
+        currentTree.innerHTML = this._previousVirtualDOMHTML;
+        currentTree = currentTree.childNodes[0];
+      }
+
+      // construct the new tree given by the render function
       var newTree = document.createElement('div'); //dummy element
       newTree.innerHTML = htmlContents;
+
+      // tag tree. This process consists in add "frontyid" attributes to all
+      // elements, as well as special comments just after every text node
+      // in order to be able to map them to real nodes to be inserted
+      this._tagTree(newTree);
+      // simple check
       if (newTree.childNodes.length > 1) {
         throw 'Rendering function MUST return a tree with a single root element';
       }
-      newTree = newTree.childNodes[0]; //move down to the root node of the new tree
 
-      /* alternative via parse. Slower in tests:  https://jsperf.com/domparser-vs-innerhtml-vs-createhtmldocument/4 */
-      //var newTree = (new DOMParser()).parseFromString(htmlContents, "text/html").body.childNodes[0];
-
-      // copy id to the root element
-      if (newTree.nodeType === Node.ELEMENT_NODE &amp;&amp; newTree.getAttribute('id') === null) {
-        newTree.setAttribute('id', this.getHtmlNodeId());
+      // copy id to the root element of this component.
+      if (newTree.childNodes[0].nodeType === Node.ELEMENT_NODE /* &amp;&amp; !newTree.childNodes[0].hasAttribute('id')*/ ) {
+        newTree.childNodes[0].setAttribute('id', this.getHtmlNodeId());
       }
+
+      // in the first render, the next previous tree will be the current newTree
+      if (firstRender) {
+        this._previousVirtualDOMHTML = newTree.innerHTML;
+      }
+
+      newTree = newTree.childNodes[0]; //move down to the root node of the new tree
 
       // TODO: create here a hook to preprocess newTree before comparing
 
+      // compare the two trees: currentTree vs. newTree. 
+      // This comparison is between the two virtual DOM trees
       var patches = TreeComparator.diff(currentTree, newTree, (node1, node2) => {
+
         // skip comparisons on our child's Component slots (child components are the responsible ones) 
-        // the parent component, once re-rendered, will see its child slots empty again, but
-        // we don't want to replace those slot with the empty one, so we skip those comparisons
+        // The parent component, once re-rendered, should not touch children root nodes, since
+        // they may have set some attributes in their root node
+        if (node1.nodeType === Node.COMMENT_NODE &amp;&amp; node1.nodeValue.match(/fronty-text-node/) !== null) return 'SKIP';
         if (node1.id &amp;&amp; node2.id &amp;&amp; node1.id == node2.id &amp;&amp; (node1.id in this.childComponentIds)) {
           // do not replace a component slot with a node with the same id, skip this operation
           console.log('Component [#' + this.htmlNodeId + ']: skipping child inspection: ' + node1.id);
@@ -337,13 +383,118 @@ class Component {
         return 'DIFF';
       });
 
-      // apply patches
-      TreeComparator.applyPatches(patches);
+      // apply patches to the REAL DOM
+      TreeComparator.applyPatches(patches, ['frontyid'], (patch) => {
+
+        // However, the patches contains nodes from the "virtual" DOM trees, not
+        // of the real DOM. We need no get the real nodes thank to our 
+        // frontyid -> realNode mapping.
+        // Moreover, we will clone the nodes being inserted in the real DOM because
+        // we will reuse these patches to also patch our current virtual DOM so nodes
+        // cannot have two parents!
+
+        patch = Object.assign({}, patch); // shallow copy of the patch
+
+        if (patch.toReplace !== undefined &amp;&amp;
+          patch.toReplace.nodeType === Node.ELEMENT_NODE ||
+          patch.toReplace.nodeType === Node.TEXT_NODE ||
+          patch.toReplace.nodeType === Node.COMMENT_NODE) {
+
+          // toReplace will be the real DOM node
+          patch.toReplace = this._resolveRealNode(patch.toReplace);
+
+
+          if (patch.replacement !== undefined &amp;&amp; patch.replacement !== null) {
+            if (patch.mode !== 'swap-nodes') {
+              if (patch.replacement.nodeType === Node.ELEMENT_NODE || 
+                  patch.replacement.nodeType === Node.COMMENT_NODE) {
+                // Element/Comment nodes. We clone the element to be inserted
+                patch.replacement = patch.replacement.cloneNode(true);
+              } else { // Text nodes
+                
+                // not only clone the text node itself, but also with the sibling
+                // which is the comment tag identifiying this text node
+
+                // for newly inserted text-nodes, the comment tag is the sibling
+                // of the replacement
+                var commentTag = patch.replacement.nextSibling.cloneNode(true);
+
+                if (patch.toReplace.nodeType === Node.TEXT_NODE) {
+                  // but if we are replacing an existent text node
+                  // the comment tag is the current one
+                  commentTag = patch.toReplace.nextSibling.cloneNode(true);
+                }
+                
+                // create a mini-tree with the two nodes, so when we index it
+                // after (with _indexNodes) this text element will contain its comment
+                // tag as sibling, so it can be indexed.
+                var dummyParent = document.createElement('div');
+                dummyParent.appendChild(patch.replacement.cloneNode(true));
+                dummyParent.appendChild(commentTag);
+                patch.replacement = dummyParent.childNodes[0];
+              }
+            } else {
+              // in swap-nodes mode, both are nodes to be found in the real DOM,
+              // so we search for the replacement in the real DOM
+              patch.replacement = this._resolveRealNode(patch.replacement);
+            }
+          }
+
+          // index the newly inserted nodes, that is, take their frontyid attribute
+          // or the comment tag and add them to the real nodes mapping
+          if (patch.replacement !== undefined &amp;&amp; patch.mode !== 'attributes') {
+            this._indexNodes(patch.replacement);
+          }
+        }
+        return patch;
+      });
+
+      // Finally apply patches to our previous virtual dom
+      if (!firstRender) {
+        TreeComparator.applyPatches(patches, ['frontyid']);
+
+        // and save the patched previous virtual DOM
+        this._previousVirtualDOMHTML = currentTree.parentNode.innerHTML;
+      }
 
       // restore child component subtrees
       this._restoreChildNodes(savedChildNodes);
     });
   }
+
+  _resolveRealNode(node) {
+    var result = null;
+
+    // text nodes
+    if (node.nodeType === Node.TEXT_NODE &amp;&amp; node.nextSibling !== null &amp;&amp; node.nextSibling.nodeType === Node.COMMENT_NODE) {
+      var id = node.nextSibling.nodeValue.replace(/fronty-text-node: /g, '');
+      result = this._realDOMNodeMapping.text_nodes[id];
+
+      // comment nodes
+    } else if (node.nodeType === Node.COMMENT_NODE) {
+      var comment_id = node.nodeValue.replace(/fronty-text-node: /g, '');
+      result = this._realDOMNodeMapping.comment_nodes[comment_id];
+
+      // element nodes
+    } else if (node.hasAttribute('frontyid')) {
+      var elem_id = node.getAttribute('frontyid');
+
+      if (this._realDOMNodeMapping.elements[elem_id] !== undefined) {
+        // the elem_id is found
+        result = this._realDOMNodeMapping.elements[elem_id];
+      }
+    }
+
+    // try to find by id
+    if (result === null) {
+      if (node.id !== undefined) {
+        result = document.getElementById(node.id);
+      }
+    }
+
+    return result;
+  }
+
 
   // lifecycle management
   /**
@@ -373,6 +524,7 @@ class Component {
     if (this.stopped) {
       this.stopped = false;
 
+      this._resetVirtualDOM();
       this.render();
 
       this.childComponents.forEach((child) => {
@@ -440,6 +592,17 @@ class Component {
   }
 
   // "private" methods
+  _resetVirtualDOM() {
+    this._previousVirtualDOMHTML = null;
+    this._generatedIdsCounter = 0;
+    this._realDOMNodeMapping = {
+      elements: {},
+      text_nodes: {},
+      comment_nodes: {}
+    };
+    this._mappingIdsOfChilds = {};
+  }
+
   _restoreChildNodes(savedChildNodes) {
     this.childComponents.forEach((childComponent) => {
       var childId = childComponent.getHtmlNodeId();
@@ -496,6 +659,53 @@ class Component {
     this.afterRender();
 
     this.rendering = false;
+  }
+
+  _indexNodes(root) {
+    if (root.nodeType === Node.ELEMENT_NODE) {
+      if (root.hasAttribute('frontyid')) {
+        this._realDOMNodeMapping.elements[root.getAttribute('frontyid')] = root;
+        if (root.hasAttribute('id') &amp;&amp; this.childComponentIds[root.id] !== undefined) {
+          this._mappingIdsOfChilds[root.getAttribute('frontyid')] = root.id;
+        }
+
+        root.removeAttribute('frontyid');
+        for (var i = 0; i &lt; root.childNodes.length; i++) {
+          this._indexNodes(root.childNodes[i]); //
+        }
+      }
+    }
+
+    if (root.nodeType === Node.TEXT_NODE) {
+      var comment = root.nextSibling;
+      if (comment !== null) {
+        var id = comment.nodeValue.replace(/fronty-text-node: /g, '');
+        this._realDOMNodeMapping.text_nodes[id] = root;
+      }
+    }
+
+    if (root.nodeType === Node.COMMENT_NODE) {
+      var comment_id = root.nodeValue.replace(/fronty-text-node: /g, '');
+      this._realDOMNodeMapping.comment_nodes[comment_id] = root;
+    }
+  }
+
+  _tagTree(tree) {
+    if (tree.nodeType === Node.ELEMENT_NODE) {
+      tree.setAttribute('frontyid', this._generatedIdsCounter++);
+      for (var i = 0; i &lt; tree.childNodes.length; i++) {
+        this._tagTree(tree.childNodes[i]);
+      }
+    }
+
+    if (tree.nodeType === Node.TEXT_NODE) {
+      var comment = document.createComment('fronty-text-node: ' + this._generatedIdsCounter++);
+      if (tree.nextSibling === null) {
+        tree.parentNode.appendChild(comment);
+      } else {
+        tree.parentNode.insertBefore(comment, tree.nextSibling);
+      }
+    }
   }
 
   _createTagChildComponents() {
@@ -812,14 +1022,26 @@ class TreeComparator {
     if (!node1.attributes &amp;&amp; node2.attributes ||
       node1.attributes &amp;&amp; !node2.attributes) {
       return false;
-    } else if (
-      node1.attributes &amp;&amp;
-      node1.attributes.length != node2.attributes.length) {
+    }
+
+    if (!node1.attributes &amp;&amp; !node2.attributes) {
+      return true;
+    }
+    var skipAttributes = (attribute) => {
+      return attribute.name !== 'frontyid'; //TODO: receive this id as paremeter
+    };
+    var node1Attributes = Array.from(node1.attributes).filter(skipAttributes);
+    var node2Attributes = Array.from(node2.attributes).filter(skipAttributes);
+
+    if (
+      node1Attributes &amp;&amp;
+      node1Attributes.length != node2Attributes.length) {
       return false;
-    } else if (node1.attributes) {
-      for (var i = 0; i &lt; node1.attributes.length; i++) {
-        if (node1.attributes[i].name != node2.attributes[i].name ||
-          node1.attributes[i].value != node2.attributes[i].value) {
+    } else if (node1Attributes) {
+      for (var i = 0; i &lt; node1Attributes.length; i++) {
+        //if (node1Attributes[i].name === 'frontyid') continue;
+        if (node1Attributes[i].name != node2Attributes[i].name ||
+          node1Attributes[i].value != node2Attributes[i].value) {
           return false;
         }
       }
@@ -840,8 +1062,11 @@ class TreeComparator {
    *
    * @param patches Patches previously computed with {@link TreeComparator.diff}
    */
-  static applyPatches(patches) {
+  static applyPatches(patches, skipAttributes, patchMapping) {
     patches.forEach((patch) => {
+      if (patchMapping !== undefined) {
+        patch = patchMapping(patch);
+      }
       // HTML nodes
       var toReplace = patch.toReplace;
       var replacement = patch.replacement;
@@ -857,7 +1082,10 @@ class TreeComparator {
             toReplace.checked =
               (attribute.checked !== false) ? true : false;
           }
-          toReplace.setAttribute(attribute.name, attribute.value);
+
+          if (skipAttributes === undefined || skipAttributes.indexOf(attribute.name) === -1 || !toReplace.hasAttribute(attribute.name)) {
+            toReplace.setAttribute(attribute.name, attribute.value);
+          }
         }
 
         for (var j = toReplace.attributes.length - 1; j >= 0; j--) {
@@ -1368,7 +1596,7 @@ class RouterComponent extends ModelComponent {
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Tue Mar 14 2017 13:27:48 GMT+0100 (CET)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Tue Apr 04 2017 23:54:37 GMT+0200 (CEST)
 </footer>
 
 <script> prettyPrint(); </script>

@@ -5,6 +5,10 @@ class ChildModelComponent extends ModelComponent {
 }
 
 describe('ModelComponent', () => {
+  function stripComments(html) {
+    return html.replace(/<!--.*?-->/g, '');
+  }
+  
   beforeEach(() => {
     var fixture = '<div id="fixture"><div id="componentId"></div></div>';
 
@@ -22,11 +26,11 @@ describe('ModelComponent', () => {
     var model = new Model();
     model.value = 'foo';
 
-    var component = new ModelComponent((m) =>'<p id="greetings">'+m.value+'</p>', model, 'componentId');
+    var component = new ModelComponent((m) =>'<p>'+m.value+'</p>', model, 'componentId');
 
     component.start();
 
-    expect(document.getElementById('greetings').innerHTML).toBe('foo');
+    expect(document.getElementById('componentId').textContent).toBe('foo');
 
   });
 
@@ -38,7 +42,7 @@ describe('ModelComponent', () => {
 
     component.start();
 
-    expect(document.getElementById('componentId').childNodes.length).toBe(1);
+    expect(document.getElementById('componentId').textContent).toBe('hi!');
 
     model.set(() => model.value = false);
 
@@ -80,7 +84,7 @@ describe('ModelComponent', () => {
     }]);
     expect(document.getElementsByClassName('item').length).toBe(4);
 
-    expect(document.getElementById('fixture').innerHTML).toBe(
+    expect(stripComments(document.getElementById('fixture').innerHTML)).toBe(
       '<div id="componentId">' +
       ' <p key="item-1" class="item">item-1</p> ' +
       ' <p key="item-2" class="item">item-2</p> ' +
@@ -156,7 +160,7 @@ describe('ModelComponent', () => {
     };
 
     parent.start();
-    expect(document.getElementById('child-0').innerHTML).toBe('foo');
+    expect(document.getElementById('child-0').textContent).toBe('foo');
     expect(parent.getChildComponents().length).toBe(1);
 
     model.set(() => {
@@ -213,8 +217,8 @@ describe('ModelComponent', () => {
     );
 
     parent.start();
-    expect(document.getElementById('child-0').innerHTML).toBe('foo');
-    expect(document.getElementById('child-1').innerHTML).toBe('bar');
+    expect(document.getElementById('child-0').textContent).toBe('foo');
+    expect(document.getElementById('child-1').textContent).toBe('bar');
     expect(parent.getChildComponents().length).toBe(2);
 
     model.set(() => {

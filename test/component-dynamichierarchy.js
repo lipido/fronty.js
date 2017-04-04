@@ -38,7 +38,7 @@ describe('Component', () => {
     };
 
     parent.start();
-    expect(document.getElementById('child-0').innerHTML).toBe('foo');
+    expect(document.getElementById('child-0').textContent).toBe('foo');
     expect(parent.getChildComponents().length).toBe(1);
 
     realRenderer = () => '<div id="componentId"></div>';
@@ -72,8 +72,8 @@ describe('Component', () => {
 
     parent.start();
     
-    expect(document.getElementById('child-0').innerHTML).toBe('child-0');
-    expect(document.getElementById('child-1').innerHTML).toBe('child-1');
+    expect(document.getElementById('child-0').textContent).toBe('child-0');
+    expect(document.getElementById('child-1').textContent).toBe('child-1');
     expect(parent.getChildComponents().length).toBe(2);
 
     realRenderer = () => '<div id="componentId"></div>';
