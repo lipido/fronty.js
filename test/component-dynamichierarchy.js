@@ -83,4 +83,27 @@ describe('Component', () => {
     expect(parent.getChildComponents().length).toBe(0);
   });
 
+  it('should autodetect child component classes on child fronty-component attribute', () => {
+    var realRenderer = () => '<div id="componentId"><div fronty-component="ChildComponent" id="child-0"></div><div fronty-component="ChildComponent" id="child-1"></div></div>';
+    var renderer = () => realRenderer();
+
+    //ChildComponent class is defined in global scope (see start of this file)
+    var parent = new Component(
+      renderer,
+      'componentId' //tags that generate childs
+    );
+
+    parent.start();
+    
+    expect(document.getElementById('child-0').textContent).toBe('child-0');
+    expect(document.getElementById('child-1').textContent).toBe('child-1');
+    expect(parent.getChildComponents().length).toBe(2);
+
+    realRenderer = () => '<div id="componentId"></div>';
+
+    parent.render();
+    
+    expect(parent.getChildComponents().length).toBe(0);
+  });  
+
 });

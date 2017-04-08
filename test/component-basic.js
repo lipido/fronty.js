@@ -17,8 +17,8 @@ describe('Component', () => {
     document.body.removeChild(document.getElementById('fixture'));
   });
 
-  it('should render a static template', () => {
-    var component = new Component(() => '<p id="componentId">Hello World</p>', 'componentId');
+  it('should render a static template', () => {//
+    var component = new Component(() => '<table id="componentId"><tr><td>Hello World</td></tr></table>', 'componentId');
 
     component.start();
 

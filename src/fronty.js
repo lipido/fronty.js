@@ -128,7 +128,7 @@ class Component {
     this.childComponentIds = {};
 
 
-    this._previousVirtualDOMHTML = null;
+    this._previousVirtualDOM = null;
     this._generatedIdsCounter = 0;
     this._realDOMNodeMapping = {
       elements: {},
@@ -185,31 +185,36 @@ class Component {
       component.start();
     }
 
-    component.render();
+    //component.render();
   }
 
   /**
-   * Creates a new Component for a specified tag name to be placed in the
-   * place of a given HTML element. This method is intended to be overrided
+   * Creates a new Component for a specified class name to be placed in a
+   * given HTML element. This method is intended to be overrided
    * by subclasses.
    *
    * By default (if not overriden), this method searches for a class with
-   * the same name as the tagName and instantiates an object of this class
-   * passing the id to it. In this sense, a parent Component
-   * specifying a child tag name 'ChildComponent' as this:
+   * the same name as className and instantiates an object of this class
+   * passing the id to it. In this sense, a parent component with a child element
+   * containing a fronty-component="ChildComponent" attribute, will create instances
+   * of ChildComponent rendering on this elememnt.<br>
+   *
+   * In addition, a parent Component specifying a child tag name 
+   * 'ChildComponent' as this:
    * <pre>new Component(renderer, 'parentId', ['ChildComponent'])</pre>
    * will create instances of ChildComponent in all places where the tag
    * &lt;childcomponent&gt; is found in the HTML provided by the parent
-   * rendereer function.
-   * @param {String} tagName The HTML tag name used to place the new child Component
-   * in the parent HTML
-   * @param {Node} childTagElement The HTML element where the new Child will be placed
+   * rendereer function. However keep in mind that "custom HTML tags" can be
+   * not accepted in any place, for example, as childs of a &lt;table&gt; element.
+   *
+   * @param {String} className The class name found in the HTML element
+   * @param {Node} element The HTML element where the new child will be placed
    * @param {String} id The HTML id found in the tag.
    * @return {Component} The new created child component.
    * @see {@link Component#childTags}
    */
-  createChildComponent(tagName, childTagElement, id) {
-    var constructorFunction = eval('' + tagName); //jshint ignore:line
+  createChildComponent(className, element, id) {
+    var constructorFunction = eval('' + className); //jshint ignore:line
 
     if (constructorFunction instanceof Function) {
       return new constructorFunction(id);
@@ -297,30 +302,50 @@ class Component {
       });
 
       var currentTree = null;
-      var firstRender = this._previousVirtualDOMHTML === null;
+      var firstRender = this._previousVirtualDOM === null;
       if (firstRender) {
         // first render, clean childs (maybe childs have some fronty comments that could interfere)
         currentTree = this._getComponentNode();
         currentTree.innerHTML = '';
       } else {
         // re-render. Restore the previous tree
-        currentTree = document.createElement('div'); //dummy element
-        currentTree.innerHTML = this._previousVirtualDOMHTML;
+        //currentTree = document.createElement('div'); //dummy element
+        currentTree = this._previousVirtualDOM;
         currentTree = currentTree.childNodes[0];
       }
 
+      var newTree = document.createElement('div');
+      
       // construct the new tree given by the render function
-      var newTree = document.createElement('div'); //dummy element
-      newTree.innerHTML = htmlContents;
+      // fix: for roots starting with TR, TD or TH, they cannot be direct
+      // childs of div, they must be inside of a table to parse them with 
+      // innerHTML
+      if (htmlContents.match(/^<tr .*/i) !== null) {
+        // trees starting with TR
+        htmlContents = '<table><tbody>' + htmlContents + '</tbody></table>';
+        newTree.innerHTML = htmlContents;
+        newTree = newTree.firstChild.firstChild;
+        
+      } else if (htmlContents.match(/^<t[dh] .*/i) !== null) {
+        // trees starting with TD or TH
+        htmlContents = '<table><tbody><tr>' + htmlContents + '</tr></tbody></table>';
+        newTree.innerHTML = htmlContents;
+        newTree = newTree.firstChild.firstChild.firstChild;
+        
+      } else {
+        // trees starting with something different from TR, TH, TD
+        newTree.innerHTML = htmlContents;
+      }
+
+      if (newTree.childNodes.length > 1) {
+        throw 'Rendering function MUST return a tree with a single root element ' + newTree.innerHTML;
+      }
 
       // tag tree. This process consists in add "frontyid" attributes to all
       // elements, as well as special comments just after every text node
       // in order to be able to map them to real nodes to be inserted
       this._tagTree(newTree);
-      // simple check
-      if (newTree.childNodes.length > 1) {
-        throw 'Rendering function MUST return a tree with a single root element';
-      }
+
 
       // copy id to the root element of this component.
       if (newTree.childNodes[0].nodeType === Node.ELEMENT_NODE /* && !newTree.childNodes[0].hasAttribute('id')*/ ) {
@@ -329,7 +354,7 @@ class Component {
 
       // in the first render, the next previous tree will be the current newTree
       if (firstRender) {
-        this._previousVirtualDOMHTML = newTree.innerHTML;
+        this._previousVirtualDOM = newTree;
       }
 
       newTree = newTree.childNodes[0]; //move down to the root node of the new tree
@@ -339,10 +364,13 @@ class Component {
       // compare the two trees: currentTree vs. newTree. 
       // This comparison is between the two virtual DOM trees
       var patches = TreeComparator.diff(currentTree, newTree, (node1, node2) => {
-
+        
+        if (firstRender) return 'REPLACE';
         // skip comparisons on our child's Component slots (child components are the responsible ones) 
         // The parent component, once re-rendered, should not touch children root nodes, since
         // they may have set some attributes in their root node
+        
+        
         if (node1.nodeType === Node.COMMENT_NODE && node1.nodeValue.match(/fronty-text-node/) !== null) return 'SKIP';
         if (node1.id && node2.id && node1.id == node2.id && (node1.id in this.childComponentIds)) {
           // do not replace a component slot with a node with the same id, skip this operation
@@ -378,12 +406,12 @@ class Component {
 
           if (patch.replacement !== undefined && patch.replacement !== null) {
             if (patch.mode !== 'swap-nodes') {
-              if (patch.replacement.nodeType === Node.ELEMENT_NODE || 
-                  patch.replacement.nodeType === Node.COMMENT_NODE) {
+              if (patch.replacement.nodeType === Node.ELEMENT_NODE ||
+                patch.replacement.nodeType === Node.COMMENT_NODE) {
                 // Element/Comment nodes. We clone the element to be inserted
                 patch.replacement = patch.replacement.cloneNode(true);
               } else { // Text nodes
-                
+
                 // not only clone the text node itself, but also with the sibling
                 // which is the comment tag identifiying this text node
 
@@ -396,7 +424,7 @@ class Component {
                   // the comment tag is the current one
                   commentTag = patch.toReplace.nextSibling.cloneNode(true);
                 }
-                
+
                 // create a mini-tree with the two nodes, so when we index it
                 // after (with _indexNodes) this text element will contain its comment
                 // tag as sibling, so it can be indexed.
@@ -426,7 +454,7 @@ class Component {
         TreeComparator.applyPatches(patches, ['frontyid']);
 
         // and save the patched previous virtual DOM
-        this._previousVirtualDOMHTML = currentTree.parentNode.innerHTML;
+        this._previousVirtualDOM = currentTree.parentNode;
       }
 
       // restore child component subtrees
@@ -565,7 +593,7 @@ class Component {
 
   // "private" methods
   _resetVirtualDOM() {
-    this._previousVirtualDOMHTML = null;
+    this._previousVirtualDOM = null;
     this._generatedIdsCounter = 0;
     this._realDOMNodeMapping = {
       elements: {},
@@ -642,10 +670,17 @@ class Component {
         }
 
         root.removeAttribute('frontyid');
-        for (var i = 0; i < root.childNodes.length; i++) {
-          this._indexNodes(root.childNodes[i]); //
-        }
       }
+      if (root.hasAttribute('fronty-component')) {
+        if (!this._nodesWithFrontyComponentAttribute) {
+          this._nodesWithFrontyComponentAttribute = [];
+        }
+        this._nodesWithFrontyComponentAttribute.push(root);
+      }
+      for (var i = 0; i < root.childNodes.length; i++) {
+        this._indexNodes(root.childNodes[i]); //
+      }
+
     }
 
     if (root.nodeType === Node.TEXT_NODE) {
@@ -682,39 +717,67 @@ class Component {
 
   _createTagChildComponents() {
 
-    if (!this.childComponentsByTag) {
-      this.childComponentsByTag = {};
+    // create childs by tag
+    if (!this.childComponentsByClassName) {
+      this.childComponentsByClassName = {};
     }
-
     this.childTags.forEach((childTag) => {
-      if (!this.childComponentsByTag[childTag]) {
-        this.childComponentsByTag[childTag] = [];
+      if (!this.childComponentsByClassName[childTag]) {
+        this.childComponentsByClassName[childTag] = [];
       }
       var childTagElements = Array.from(this._getComponentNode().getElementsByTagName(childTag));
 
-      var childIds = [];
       for (var i = 0; i < childTagElements.length; i++) {
         var childTagElement = childTagElements[i];
         var itemId = childTagElement.getAttribute('id');
-        childIds.push(itemId);
 
+        // create component if there is no child component for this id yet
         if (!this.getChildComponent(itemId)) {
           var component = this.createChildComponent(childTag, childTagElement, itemId);
           if (component) {
             component.setHtmlNodeId(itemId);
             this.addChildComponent(component);
-            this.childComponentsByTag[childTag].push(component);
+            this.childComponentsByClassName[childTag].push(component);
           }
         }
       }
+    });
 
-      for (var j = this.childComponentsByTag[childTag].length - 1; j >= 0; j--) {
-        var childComponent = this.childComponentsByTag[childTag][j];
-        if (childIds.indexOf(childComponent.getHtmlNodeId()) === -1 &&
+    // create childs by fronty-component attribute
+    if (!this._nodesWithFrontyComponentAttribute) {
+      this._nodesWithFrontyComponentAttribute = [];
+    }
+    for (var j = this._nodesWithFrontyComponentAttribute.length - 1; j >= 0; j--) {
+      var node = this._nodesWithFrontyComponentAttribute[j];
+      var nodeId = node.getAttribute('id');
+      var className = node.getAttribute('fronty-component');
+
+      if (this._getComponentNode().querySelector('#' + nodeId) !== null) {
+        if (!this.getChildComponent(nodeId)) {
+          var component = this.createChildComponent(className, node, nodeId);
+          if (component) {
+            component.setHtmlNodeId(nodeId);
+            this.addChildComponent(component);
+            if (this.childComponentsByClassName[className] === undefined) {
+              this.childComponentsByClassName[className] = [];
+            }
+            this.childComponentsByClassName[className].push(component);
+          }
+        }
+      } else {
+        this._nodesWithFrontyComponentAttribute.splice(j, 1);
+      }
+    }
+
+    // clean childs that have disappear
+    Object.keys(this.childComponentsByClassName).forEach((childTag) => {
+      for (var j = this.childComponentsByClassName[childTag].length - 1; j >= 0; j--) {
+        var childComponent = this.childComponentsByClassName[childTag][j];
+        if ( /*childIds.indexOf(childComponent.getHtmlNodeId()) === -1 &&*/
           this._getComponentNode().querySelector('#' + childComponent.getHtmlNodeId()) === null) {
 
           this.removeChildComponent(childComponent);
-          this.childComponentsByTag[childTag].splice(j, 1);
+          this.childComponentsByClassName[childTag].splice(j, 1);
         }
       }
     });
@@ -1310,31 +1373,29 @@ class ModelComponent extends Component {
    * @return {Component} The new created child Component.
    * @see {@link Component#childTags}
    */
-  createChildComponent(tagName, childTagElement, id) {
+  createChildComponent(className, element, id) {
     var oneModelObject = this._mergeModelInOneObject();
     var modelItem = null;
-    if (childTagElement.getAttribute('model')) {
-      modelItem = eval('oneModelObject.' + childTagElement.getAttribute('model')); //jshint ignore:line
+    if (element.getAttribute('model')) {
+      modelItem = eval('oneModelObject.' + element.getAttribute('model')); //jshint ignore:line
     }
-    return this.createChildModelComponent(tagName, childTagElement, id, modelItem);
+    return this.createChildModelComponent(className, element, id, modelItem);
   }
 
   /**
-   * This method searches for a class with the name of the childTagElement parameter
-   * with a
-   * constructor taking two attributes: id and model.<br>
+   * This method searches for a class with the name of the className parameter
+   * with a constructor taking two attributes: id and model.<br>
    * If you have components with different constructors or this policy does not
    * adapt to your needs, you can override this method.
    *
-   * @param {String} tagName The HTML tag name used to place the new child Component
-   * in the parent HTML
-   * @param {Node} childTagElement The HTML element where the new Child will be placed
-   * @param {String} id The HTML id found in the tag.
+   * @param {String} className The class name found in the element
+   * @param {Node} element The HTML element where the new child will be placed
+   * @param {String} id The HTML id found in the element.
    * @param {Object} modelItem a model object for the new Component.
    * @return {Component} The new created child component.
    */
-  createChildModelComponent(tagName, childTagElement, id, modelItem) {
-    var constructorFunction = eval('' + tagName); //jshint ignore:line
+  createChildModelComponent(className, element, id, modelItem) {
+    var constructorFunction = eval('' + className); //jshint ignore:line
 
     if (constructorFunction instanceof Function) {
       return new constructorFunction(id, modelItem);

@@ -13,7 +13,7 @@ describe('Component', () => {
   });
 
   it('should render child components', () => {
-    var parent = new Component(() => '<div id="componentId"><p id="childId"></p></div>', 'componentId');
+    var parent = new Component( () => '<div id="componentId"><p id="childId"></p></div>', 'componentId');
     var child = new Component( () => '<div id="childId">child!</div>', 'childId');
     
     parent.addChildComponent(child);
@@ -21,6 +21,24 @@ describe('Component', () => {
     parent.start();
     
     expect(document.getElementById('childId').textContent).toBe('child!');
+  });
+  
+  it('should allow child components of TR, TD, TH type', () => {
+    var parent = new Component( () => '<div id="componentId"><table><tr id="childId"></tr><tr><th id="childId2"></th></tr><tr><td id="childId3"></td></tr></table></div>', 'componentId');
+    var child2 = new Component( () => '<tr id="childId"><td>Hello!</td></tr>', 'childId');
+    var child = new Component( () => '<td id="childId2">Hello2!</td>', 'childId2');    
+    var child3 = new Component( () => '<td id="childId3"></td>', 'childId3');
+    
+    
+    parent.addChildComponent(child);
+    parent.addChildComponent(child2);
+    parent.addChildComponent(child3);
+    
+    parent.start();
+
+    expect(document.getElementById('childId').textContent).toBe('Hello!');
+    expect(document.getElementById('childId2').textContent).toBe('Hello2!');
+    expect(document.getElementById('childId3').textContent).toBe('');
   });
   
   it('should allow to not indicate the id in the root elem of the template', () => {
@@ -95,5 +113,5 @@ describe('Component', () => {
     
     expect(document.getElementById('childId').textContent).toBe('child!');
     
-  });  
+  });
 });
