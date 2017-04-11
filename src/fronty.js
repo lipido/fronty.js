@@ -1315,6 +1315,8 @@ class ModelComponent extends Component {
     } else {
       throw 'Component [' + this.htmlNodeId + ']: the model must inherit Model';
     }
+    
+    this.updater = this.update.bind(this); // the update function bound to this
   }
 
   /**
@@ -1334,7 +1336,7 @@ class ModelComponent extends Component {
 
     if (this.stopped === false) {
       this.models.forEach((model) => {
-        model.removeObserver(this);
+        model.removeObserver(this.updater);
       });
     }
     super.stop();
@@ -1343,7 +1345,7 @@ class ModelComponent extends Component {
   start() {
     if (this.stopped) {
       this.models.forEach((model) => {
-        model.addObserver(this.update.bind(this));
+        model.addObserver(this.updater);
       });
     }
     super.start();

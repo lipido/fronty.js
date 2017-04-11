@@ -34,6 +34,22 @@ describe('ModelComponent', () => {
 
   });
 
+  it('should remove/add the observer after component restarts', () => {
+    var model = new Model();
+    model.value = 'foo';
+
+    var component = new ModelComponent((m) => '<p>' + m.value + '</p>', model, 'componentId');
+
+    component.start();
+
+    expect(model.observers.length).toBe(1);
+    component.stop();
+    expect(model.observers.length).toBe(0);
+    component.start();
+    expect(model.observers.length).toBe(1);
+
+  });
+
   it('should remove nodes after update', () => {
     var model = new Model();
     model.value = 'true';
