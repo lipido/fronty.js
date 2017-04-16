@@ -42,4 +42,5 @@ describe('Component', () => {
     expect(clicked).toBe(true);
 
   });
+
 });

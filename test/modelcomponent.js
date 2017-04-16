@@ -1,6 +1,6 @@
 class ChildModelComponent extends ModelComponent {
   constructor(id, model) {
-    super(()=>'<div id="' + id + '">'+model.value+'</div>', model, id);
+    super(() => '<div id="' + id + '">' + model.value + '</div>', model, id);
   }
 }
 
@@ -8,7 +8,7 @@ describe('ModelComponent', () => {
   function stripComments(html) {
     return html.replace(/<!--.*?-->/g, '');
   }
-  
+
   beforeEach(() => {
     var fixture = '<div id="fixture"><div id="componentId"></div></div>';
 
@@ -26,7 +26,7 @@ describe('ModelComponent', () => {
     var model = new Model();
     model.value = 'foo';
 
-    var component = new ModelComponent((m) =>'<p>'+m.value+'</p>', model, 'componentId');
+    var component = new ModelComponent((m) => '<p>' + m.value + '</p>', model, 'componentId');
 
     component.start();
 
@@ -54,7 +54,7 @@ describe('ModelComponent', () => {
     var model = new Model();
     model.value = 'true';
 
-    var component = new ModelComponent((m) =>'<div id="componentId">'+(m.value? 'hi!':'')+'</div>', model, 'componentId');
+    var component = new ModelComponent((m) => '<div id="componentId">' + (m.value ? 'hi!' : '') + '</div>', model, 'componentId');
 
     component.start();
 
@@ -66,16 +66,16 @@ describe('ModelComponent', () => {
   });
 
   it('should update a simple list', () => {
-    
+
     var renderer = (m) => {
       var res = '<div id="componentId">';
-      m.items.forEach((item)=>{
-        res+=' <p key="'+item.item+'" class="item">'+item.item+'</p> ';
+      m.items.forEach((item) => {
+        res += ' <p key="' + item.item + '" class="item">' + item.item + '</p> ';
       });
       res += '</div>';
       return res;
     };
-    
+
     var model = new Model();
     model.items = [{
       item: 'item-1'
@@ -84,7 +84,7 @@ describe('ModelComponent', () => {
     }, {
       item: 'item-4'
     }];
-    
+
     var component = new ModelComponent(renderer, model, 'componentId');
 
     component.start();
@@ -112,13 +112,13 @@ describe('ModelComponent', () => {
   it('should not touch subtrees if siblings are added', () => {
     var renderer = (m) => {
       var res = '<div id="componentId"><p id="donottouch">Do not touch</p>';
-      m.items.forEach((item)=>{
-        res+='<p key="'+item.item+'" class="item">'+item.item+'</p>';
+      m.items.forEach((item) => {
+        res += '<p key="' + item.item + '" class="item">' + item.item + '</p>';
       });
       res += '</div>';
       return res;
     };
-    
+
     var model = new Model();
     model.items = [{
       item: 'foo'
@@ -148,15 +148,15 @@ describe('ModelComponent', () => {
   it('should allow child tags', () => {
     var renderer = (m) => {
       var res = '<div id="componentId">';
-      for (var index = 0; index < m.items.length; index ++) {
+      for (var index = 0; index < m.items.length; index++) {
         var item = m.items[index];
-        res+='<ChildModelComponent id="child-'+index+'" model="items['+index+']"></ChildModelComponent>';
+        res += '<ChildModelComponent id="child-' + index + '" model="items[' + index + ']"></ChildModelComponent>';
       }
       res += '</div>';
       console.log(res);
       return res;
     };
-    
+
     var model = new Model();
 
     var childModel = new Model();
@@ -171,7 +171,7 @@ describe('ModelComponent', () => {
 
     parent.createChildModelComponent = (tagName, childTagElement, id, modelItem) => {
       if (tagName === 'ChildModelComponent') {
-        return new ModelComponent((m) => '<div id="' + id + '">'+m.value+'</div>', modelItem, id);
+        return new ModelComponent((m) => '<div id="' + id + '">' + m.value + '</div>', modelItem, id);
       }
     };
 
@@ -207,15 +207,15 @@ describe('ModelComponent', () => {
   it('should autodetect child component classes on child tags', () => {
     var renderer = (m) => {
       var res = '<div id="componentId">';
-      for (var index = 0; index < m.items.length; index ++) {
+      for (var index = 0; index < m.items.length; index++) {
         var item = m.items[index];
-        res+='<ChildModelComponent id="child-'+index+'" model="items['+index+']"></ChildModelComponent>';
+        res += '<ChildModelComponent id="child-' + index + '" model="items[' + index + ']"></ChildModelComponent>';
       }
       res += '</div>';
       console.log(res);
       return res;
     };
-    
+
     var model = new Model();
 
     var childModel = new Model();

@@ -28,10 +28,9 @@
     <li class="{{#if done}}disabled {{/if}}list-group-item" key="item-{{id}}">
       {{description}}
       
-      {{#if done}}
-      <button class="reopenbutton btn btn-default" type="button">reopen</button></span>
-      {{else}}
-      <button class="donebutton btn btn-default" type="button">done</button> {{/if}}
+      {{#if done}}<button class="reopenbutton btn btn-default" type="button">reopen</button>
+      {{else}}<button class="donebutton btn btn-default" type="button">done</button>
+      {{/if}}
       
       <button class="removebutton btn btn-default" type="button">remove</button>
       
@@ -117,6 +116,7 @@
 
       new TodoListComponent('todo-list-app', todos).start();
       todos.set(() => {
+        todos.addItem(new TodoItem('aaaa', false, todos));
         todos.addItem(new TodoItem('lunch', false, todos));
         todos.addItem(new TodoItem('dinner', false, todos));
       });

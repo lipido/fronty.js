@@ -15,11 +15,13 @@
  *      re-renders, it restores its child's subtrees on their places. Child Components
  *      can be added manually (See {@link Component#addChildComponent}) or created
  *      dynamically by <em>this</em> Component via 
- *      custom tag elements (See {@link Component#childTags}).</li>
+ *      "fronty-component" attribute or via custom tag elements 
+ *      (See {@link Component#createChildComponent} and {@link Component#childTags}).</li>
  *    <li>Manage event listeners, restoring them each re-rendering.</li>
  *  </ul>
- *  Components render when you call {@link Component#start|start()}, and updates each time you call the
- *  {@link Component#render|render()} function. 
+ *  <p>Components render when you call {@link Component#start|start()}, 
+ * and update each time you call the {@link Component#render|render()}
+ * function.</p>
  *
  * @example
  * <!-- html page -->
@@ -50,7 +52,9 @@ class Component {
    * @param {Function} renderer A non-parameter function that returns HTML.
    * @param {String} htmlNodeId The id of the HTML element where this Component should 
    *                              render to.
-   * @param {Array.<String>} [childTags] An optional Array of strings of custom-tags for dynamically created child Components.
+   * @param {Array.<String>} [childTags] An optional Array of strings of custom-tags for
+   *                         dynamically created child Components 
+   *                        (See {@link Component#createChildComponent}).
    */
   constructor(renderer, htmlNodeId, childTags) {
 
@@ -100,16 +104,13 @@ class Component {
     this.stopped = true;
 
     /**
-     * The event listeners that this Component is managing, arranged by the HTML
-     * query selector. See {@link Component#addEventListener|addEventListener()}.
+     * The event listeners that this Component is managing. 
+     * See {@link Component#addEventListener|addEventListener()}.
      *
      * @name Component#eventListeners
      * @type {Object.<string, {callback: Function, eventType: String}>}
      */
-    this.eventListeners = {};
-
-    // Currently installed event listeners by real DOM nodes (private)
-    this._listeners = [];
+    this.eventListeners = [];
 
     /**
      * The array of child components.
@@ -127,22 +128,36 @@ class Component {
      */
     this.childComponentIds = {};
 
+    /////// "private" members
 
+    // The global event listener placed on the root element of this Component
+    this._boundEventsListener = this._eventsListener.bind(this);
+
+    // The DOM tree of this component as it was in the previous render.
+    // We will not compare the new rendered trees coming from the renderer function
+    // to the real DOM. Why? We want that third-party libraries could do some changes
+    // in the real DOM so, if it is not necessary, we will try not to overwrite their 
+    // changes. To achieve this, we keep a "virtual DOM" that may not be
+    // exactly the real DOM, so we only change things that are under our control,
+    // things that we added in the previous render.
     this._previousVirtualDOM = null;
-    this._generatedIdsCounter = 0;
-    this._realDOMNodeMapping = {
-      elements: {},
-      text_nodes: {},
-      comment_nodes: {}
-    };
-    this._mappingIdsOfChilds = {};
+
+    // Elements where fronty-component attribute is found
+    this._nodesWithFrontyComponentAttribute = [];
+
+    // An object for parsing HTML into DOM (classic root.innerHTML=htmlstring)
+    // We delegate on a "parsing service" object in order to allow the
+    // accumulation of multiple parsing requests and call "innerHTML = ..." once,
+    // instead of multiple times, which is faster.
+    this._parsingService = Component._defaultParsingService;
   }
 
+
   /**
-   * Gets the HTML element id where this Component should render.
+   * Gets the HTML element's id where this Component should render.
    *
-   * This element will be replaced with the contents of this component
-   * renderer function.
+   * <p>This element will be replaced with the contents of this component
+   * renderer function.</p>
    *
    * @returns {String} The HTML node id where this Component is rendered.
    */
@@ -151,27 +166,30 @@ class Component {
   }
 
   /**
-   * Sets the HTML element id where this Component should render.
+   * Sets the HTML element id where this Component should render in the next
+   * rendering.
    *
-   * This element will be replaced with the contents of this component
-   * renderer function.
+   * <p>The element will be replaced with the contents of this component
+   * renderer function.</p>
    *
-   * @param {String} htmlNodeId The HTML node id where this Component is rendered.
+   * @param {String} htmlNodeId The HTML node id where this Component will
+   *                            be rendered.
    */
   setHtmlNodeId(htmlNodeId) {
     this.htmlNodeId = htmlNodeId;
     this._resetVirtualDOM();
   }
 
-  // child management
+  //// children management
+
   /**
-   * Adds a child Component to this Component.<br>
+   * Adds a child Component to this Component.
    *
-   * The HTML element where the child Component will render into do not change
-   * when <em>this</em> Component is re-rendered.
+   * <p>The HTML element where the child Component will render will not be re-rendered
+   * when <em>this</em> Component (the parent) is re-rendered.</p>
    *
-   * The child component will be started or stopped if this Component is currently
-   * started or stopped, respectively.
+   * <p>The child component will be started (and thus immediately rendered) or stopped 
+   * if this Component is currently started or stopped, respectively.</p>
    *
    * @param {Component} component The child Component.
    */
@@ -184,28 +202,36 @@ class Component {
     } else {
       component.start();
     }
-
-    //component.render();
   }
 
   /**
-   * Creates a new Component for a specified class name to be placed in a
+   * Creates a new child Component for a specified class name to be placed in a
    * given HTML element. This method is intended to be overrided
    * by subclasses.
    *
-   * By default (if not overriden), this method searches for a class with
-   * the same name as className and instantiates an object of this class
-   * passing the id to it. In this sense, a parent component with a child element
-   * containing a fronty-component="ChildComponent" attribute, will create instances
-   * of ChildComponent rendering on this elememnt.<br>
+   * <p>Parent components define where to create new children via their rendered 
+   * HTML in two ways:
+   * <ul>
+   * <li>Via <code>fronty-component</code> attribute. An element like
+   * <code>&lt;div fronty-component="ChildComponent"&gt;&lt;/div&gt;</code>
+   * indicates that <code>ChildComponent</code> instances should be created and rendered
+   * on that element.</li>
    *
-   * In addition, a parent Component specifying a child tag name 
-   * 'ChildComponent' as this:
-   * <pre>new Component(renderer, 'parentId', ['ChildComponent'])</pre>
-   * will create instances of ChildComponent in all places where the tag
-   * &lt;childcomponent&gt; is found in the HTML provided by the parent
-   * rendereer function. However keep in mind that "custom HTML tags" can be
-   * not accepted in any place, for example, as childs of a &lt;table&gt; element.
+   * <li>Via custom HTML tag. These tags
+   * must be indicated in the constructor of the component. For example:
+   * <code>new Component(renderer, 'parentId', ['ChildComponent'])</code>,
+   * indicates that <code>ChildComponent</code> should be created
+   * and rendered into when elements with this tag name are found.
+   * <b>Note:</b> Remember that custom HTML tags do not work at any
+   * place. For example, as child of a <code>&lt;table&gt;</code> element.</li>
+   * </ul></p>
+   * <p>Everytime a new element indicating that a child should be created, this
+   * method is called to create the real instance.</p>
+   * 
+   * <p><b>Note:</b> By default, this function uses <code>eval(''+className)</code>
+   * to create the instance. If you are packing your application and this library
+   * in different modules, eval may fail in finding the className. You must 
+   * override the method to create the child.</p>
    *
    * @param {String} className The class name found in the HTML element
    * @param {Node} element The HTML element where the new child will be placed
@@ -222,9 +248,9 @@ class Component {
   }
 
   /**
-   * Removes a child Component from this Component.<br>
+   * Removes a child Component from this Component.
    *
-   * After the child removal, <em>this</em> component will re-render.
+   * <p>After the child removal, <em>this</em> component will re-render.</p>
    *
    * @param {Component} component The child Component.
    */
@@ -240,7 +266,7 @@ class Component {
   }
 
   /**
-   * Gets the child Components of this Component.<br>
+   * Gets the child Components of this Component.
    *
    * @returns {Array.<Component>} The child Components.
    */
@@ -267,7 +293,7 @@ class Component {
     return this.childComponentIds[id];
   }
 
-  // rendering
+  //// rendering
   /**
    * Render this Component, which consists in:
    * <ol>
@@ -288,213 +314,53 @@ class Component {
    * </ol> 
    */
   render() {
-    this._doRender((htmlContents) => {
-      // save child component subtrees
-      var savedChildNodes = this._saveChildNodes();
 
-      // update real node mappings of children//
-      Object.keys(this._realDOMNodeMapping.elements).forEach((frontyid) => {
-        if (this._realDOMNodeMapping.elements[frontyid].hasAttribute('id') &&
-          this.childComponentIds[this._realDOMNodeMapping.elements[frontyid].getAttribute('id')] !== undefined
-        ) {
-          this._realDOMNodeMapping.elements[frontyid] = this._getChildNode(this._realDOMNodeMapping.elements[frontyid].getAttribute('id'));
-        }
-      });
-
-      var currentTree = null;
-      var firstRender = this._previousVirtualDOM === null;
-      if (firstRender) {
-        // first render, clean childs (maybe childs have some fronty comments that could interfere)
-        currentTree = this._getComponentNode();
-        currentTree.innerHTML = '';
-      } else {
-        // re-render. Restore the previous tree
-        //currentTree = document.createElement('div'); //dummy element
-        currentTree = this._previousVirtualDOM;
-        currentTree = currentTree.childNodes[0];
-      }
-
-      var newTree = document.createElement('div');
-      
-      // construct the new tree given by the render function
-      // fix: for roots starting with TR, TD or TH, they cannot be direct
-      // childs of div, they must be inside of a table to parse them with 
-      // innerHTML
-      if (htmlContents.match(/^<tr .*/i) !== null) {
-        // trees starting with TR
-        htmlContents = '<table><tbody>' + htmlContents + '</tbody></table>';
-        newTree.innerHTML = htmlContents;
-        newTree = newTree.firstChild.firstChild;
-        
-      } else if (htmlContents.match(/^<t[dh] .*/i) !== null) {
-        // trees starting with TD or TH
-        htmlContents = '<table><tbody><tr>' + htmlContents + '</tr></tbody></table>';
-        newTree.innerHTML = htmlContents;
-        newTree = newTree.firstChild.firstChild.firstChild;
-        
-      } else {
-        // trees starting with something different from TR, TH, TD
-        newTree.innerHTML = htmlContents;
-      }
-
-      if (newTree.childNodes.length > 1) {
-        throw 'Rendering function MUST return a tree with a single root element ' + newTree.innerHTML;
-      }
-
-      // tag tree. This process consists in add "frontyid" attributes to all
-      // elements, as well as special comments just after every text node
-      // in order to be able to map them to real nodes to be inserted
-      this._tagTree(newTree);
-
-
-      // copy id to the root element of this component.
-      if (newTree.childNodes[0].nodeType === Node.ELEMENT_NODE /* && !newTree.childNodes[0].hasAttribute('id')*/ ) {
-        newTree.childNodes[0].setAttribute('id', this.getHtmlNodeId());
-      }
-
-      // in the first render, the next previous tree will be the current newTree
-      if (firstRender) {
-        this._previousVirtualDOM = newTree;
-      }
-
-      newTree = newTree.childNodes[0]; //move down to the root node of the new tree
-
-      // TODO: create here a hook to preprocess newTree before comparing
-
-      // compare the two trees: currentTree vs. newTree. 
-      // This comparison is between the two virtual DOM trees
-      var patches = TreeComparator.diff(currentTree, newTree, (node1, node2) => {
-        
-        if (firstRender) return 'REPLACE';
-        // skip comparisons on our child's Component slots (child components are the responsible ones) 
-        // The parent component, once re-rendered, should not touch children root nodes, since
-        // they may have set some attributes in their root node
-        
-        
-        if (node1.nodeType === Node.COMMENT_NODE && node1.nodeValue.match(/fronty-text-node/) !== null) return 'SKIP';
-        if (node1.id && node2.id && node1.id == node2.id && (node1.id in this.childComponentIds)) {
-          // do not replace a component slot with a node with the same id, skip this operation
-          console.log('Component [#' + this.htmlNodeId + ']: skipping child inspection: ' + node1.id);
-          return 'SKIP';
-        } else if (node1.id && (node1.id in this.childComponentIds)) {
-          // we want to replace a component slot with another stuff, do complete replacement (maybe the slot is removed)
-          return 'REPLACE';
-        }
-        return 'DIFF';
-      });
-
-      // apply patches to the REAL DOM
-      TreeComparator.applyPatches(patches, ['frontyid'], (patch) => {
-
-        // However, the patches contains nodes from the "virtual" DOM trees, not
-        // of the real DOM. We need no get the real nodes thank to our 
-        // frontyid -> realNode mapping.
-        // Moreover, we will clone the nodes being inserted in the real DOM because
-        // we will reuse these patches to also patch our current virtual DOM so nodes
-        // cannot have two parents!
-
-        patch = Object.assign({}, patch); // shallow copy of the patch
-
-        if (patch.toReplace !== undefined &&
-          patch.toReplace.nodeType === Node.ELEMENT_NODE ||
-          patch.toReplace.nodeType === Node.TEXT_NODE ||
-          patch.toReplace.nodeType === Node.COMMENT_NODE) {
-
-          // toReplace will be the real DOM node
-          patch.toReplace = this._resolveRealNode(patch.toReplace);
-
-
-          if (patch.replacement !== undefined && patch.replacement !== null) {
-            if (patch.mode !== 'swap-nodes') {
-              if (patch.replacement.nodeType === Node.ELEMENT_NODE ||
-                patch.replacement.nodeType === Node.COMMENT_NODE) {
-                // Element/Comment nodes. We clone the element to be inserted
-                patch.replacement = patch.replacement.cloneNode(true);
-              } else { // Text nodes
-
-                // not only clone the text node itself, but also with the sibling
-                // which is the comment tag identifiying this text node
-
-                // for newly inserted text-nodes, the comment tag is the sibling
-                // of the replacement
-                var commentTag = patch.replacement.nextSibling.cloneNode(true);
-
-                if (patch.toReplace.nodeType === Node.TEXT_NODE) {
-                  // but if we are replacing an existent text node
-                  // the comment tag is the current one
-                  commentTag = patch.toReplace.nextSibling.cloneNode(true);
-                }
-
-                // create a mini-tree with the two nodes, so when we index it
-                // after (with _indexNodes) this text element will contain its comment
-                // tag as sibling, so it can be indexed.
-                var dummyParent = document.createElement('div');
-                dummyParent.appendChild(patch.replacement.cloneNode(true));
-                dummyParent.appendChild(commentTag);
-                patch.replacement = dummyParent.childNodes[0];
-              }
-            } else {
-              // in swap-nodes mode, both are nodes to be found in the real DOM,
-              // so we search for the replacement in the real DOM
-              patch.replacement = this._resolveRealNode(patch.replacement);
-            }
-          }
-
-          // index the newly inserted nodes, that is, take their frontyid attribute
-          // or the comment tag and add them to the real nodes mapping
-          if (patch.replacement !== undefined && patch.mode !== 'attributes') {
-            this._indexNodes(patch.replacement);
-          }
-        }
-        return patch;
-      });
-
-      // Finally apply patches to our previous virtual dom
-      if (!firstRender) {
-        TreeComparator.applyPatches(patches, ['frontyid']);
-
-        // and save the patched previous virtual DOM
-        this._previousVirtualDOM = currentTree.parentNode;
-      }
-
-      // restore child component subtrees
-      this._restoreChildNodes(savedChildNodes);
-    });
-  }
-
-  _resolveRealNode(node) {
-    var result = null;
-
-    // text nodes
-    if (node.nodeType === Node.TEXT_NODE && node.nextSibling !== null && node.nextSibling.nodeType === Node.COMMENT_NODE) {
-      var id = node.nextSibling.nodeValue.replace(/fronty-text-node: /g, '');
-      result = this._realDOMNodeMapping.text_nodes[id];
-
-      // comment nodes
-    } else if (node.nodeType === Node.COMMENT_NODE) {
-      var comment_id = node.nodeValue.replace(/fronty-text-node: /g, '');
-      result = this._realDOMNodeMapping.comment_nodes[comment_id];
-
-      // element nodes
-    } else if (node.hasAttribute('frontyid')) {
-      var elem_id = node.getAttribute('frontyid');
-
-      if (this._realDOMNodeMapping.elements[elem_id] !== undefined) {
-        // the elem_id is found
-        result = this._realDOMNodeMapping.elements[elem_id];
-      }
+    if (this.rendering === true) {
+      //avoid recursion
+      return;
     }
 
-    // try to find by id
-    if (result === null) {
-      if (node.id !== undefined) {
-        result = document.getElementById(node.id);
-      }
+    if (this.stopped || !this.htmlNodeId || this._getComponentNode() === null) {
+      // if the component is stopped, there is no id to render o the document
+      // do not contains the id to render to
+      return;
     }
 
-    return result;
-  }
+    this.rendering = true;
 
+    this.beforeRender(); //hook
+
+    // save child component subtrees
+    var savedChildNodes = this._saveChildNodes();
+
+    // call the render function
+    var htmlContents = this.renderer();
+
+    // the HTML is a string, parse it and then render
+    this._getDOMFromRendererOutput(htmlContents,
+      (newTree) => {
+
+        // compute the differences between the previous DOM and the newTree,
+        // updating both the real DOM and the previous DOM.
+        this._renderNewTree(newTree);
+
+        // restore child component subtrees
+        this._restoreChildNodes(savedChildNodes);
+
+        // put the global event listener on the root of this component
+        this._updateEventListeners();
+
+        // create all children that may have appeared in the form of
+        // custom tag HTML elements, or elements with the "fronty-component"
+        // attribute.
+        this._createChildComponents();
+
+
+        this.afterRender(); //hook
+
+        this.rendering = false;
+      });
+  }
 
   // lifecycle management
   /**
@@ -506,10 +372,12 @@ class Component {
     if (this.stopped === false) {
       this.stopped = true;
 
-      this.childComponents.forEach((child) => {
+      for (let i = 0; i < this.childComponents.length; i++) {
+        var child = this.childComponents[i];
         child.stop();
-      });
+      }
     }
+
     this.onStop();
   }
 
@@ -527,9 +395,10 @@ class Component {
       this._resetVirtualDOM();
       this.render();
 
-      this.childComponents.forEach((child) => {
+      for (let i = 0; i < this.childComponents.length; i++) {
+        var child = this.childComponents[i];
         child.start();
-      });
+      }
     }
     this.onStart();
   }
@@ -548,18 +417,21 @@ class Component {
    * attach the listener to.
    * @param {Function} callback The callback function to dispatch the event.
    */
-  addEventListener(eventType, nodesQuery, callback) {
-    if (!(nodesQuery in this.eventListeners)) {
-      this.eventListeners[nodesQuery] = [];
-    }
+  addEventListener(eventType, nodesQuery, callback) { ///HOLA
 
-    this.eventListeners[nodesQuery].push({
+    this.eventListeners.push({
+      query: nodesQuery,
       callback: callback,
       eventType: eventType
     });
 
-    this._addEventListener(nodesQuery, eventType, callback);
+    var rootNode = this._getComponentNode();
+    if (rootNode !== null) {
+      this._getComponentNode().removeEventListener(eventType, this._boundEventsListener);
+      this._getComponentNode().addEventListener(eventType, this._boundEventsListener);
+    }
   }
+
 
   // Hooks
 
@@ -592,19 +464,185 @@ class Component {
   }
 
   // "private" methods
-  _resetVirtualDOM() {
-    this._previousVirtualDOM = null;
-    this._generatedIdsCounter = 0;
-    this._realDOMNodeMapping = {
-      elements: {},
-      text_nodes: {},
-      comment_nodes: {}
-    };
-    this._mappingIdsOfChilds = {};
+  _renderNewTree(newTree) {
+
+    let firstRender = this._previousVirtualDOM === null;
+
+    //  Get the currentTree to we will compare against
+    let currentTree = null;
+    if (!firstRender) {
+      // re-render. Restore the previous tree
+      currentTree = this._previousVirtualDOM.firstChild;
+    } else {
+      // first render, the currentTree to compare against is the actual DOM element
+      // where we will render
+      currentTree = this._getComponentNode();
+      // clean the destiny node
+      while (currentTree.firstChild) {
+        currentTree.removeChild(currentTree.firstChild);
+      }
+    }
+
+    // copy id attribute to the root element of this component.
+    // the component does not need to specify any id in its rendering function
+    // root element
+    if (newTree.nodeType === Node.ELEMENT_NODE) {
+      newTree.setAttribute('id', this.getHtmlNodeId());
+    }
+
+    // TODO: create here a hook to preprocess newTree before comparing
+
+    // compare the two trees: currentTree vs. newTree. 
+    // This comparison is between the two virtual DOM trees
+    var patches = TreeComparator.diff(currentTree, newTree, (node1, node2) => {
+
+      // Special policy to do this comparison:
+
+      // 1. Ignore and totally replace the contents of the destinty node if we are in the first render. 
+      if (firstRender) return TreeComparator.COMPARE_POLICY_REPLACE;
+
+      // 2. Skip comparisons on our children Component slots (child components are the responsible ones) 
+      // The parent component, once re-rendered, should not touch children root nodes, since
+      // they are under control of child components.
+      if (node1.id && node2.id && node1.id === node2.id && (node1.id in this.childComponentIds)) {
+        return TreeComparator.COMPARE_POLICY_SKIP;
+      }
+
+      if (node1.id && (node1.id in this.childComponentIds)) {
+        // we want to compare a child component slot with another element, do a complete
+        // replacement
+        return TreeComparator.COMPARE_POLICY_REPLACE;
+      }
+
+      // By default, do a regular comparison
+      return TreeComparator.COMPARE_POLICY_DIFF;
+    });
+
+    // Apply patches to the REAL DOM
+    TreeComparator.applyPatches(patches, (patch) => {
+
+      // However, the patches contains nodes from the "virtual" DOM trees, not
+      // of the real DOM. We need no get the real nodes.
+      // Moreover, we will clone the nodes being inserted in the real DOM because
+      // we will reuse these patches to also patch our current virtual DOM so nodes
+      // cannot have two parents!
+      // To do these, we can use the patchMapping parameter of TreeComparator.applyPatches(),
+      // which allows us to change each being applied by another patch.
+
+      patch = Object.assign({}, patch); // shallow copy of the patch
+
+      // toReplace will be the real DOM node. In our virtual DOM, each node
+      // has a reference to the real DOM node (see the next few lines).
+      patch.toReplace = this._resolveRealNode(patch.toReplace);
+
+      if (patch.mode === TreeComparator.PATCH_INSERT_NODE ||
+        patch.mode === TreeComparator.PATCH_APPEND_CHILD ||
+        patch.mode === TreeComparator.PATCH_REPLACE_NODE) {
+
+        // If we will insert new nodes, we will clone them as well as
+        // to add a reference from the cloned nodes (which will remain in our
+        // virtual DOM) to the corresponding clones (which will be inserted in the real DOM)
+        patch.replacement = this._cloneAndIndex(patch.replacement);
+
+      } else if (patch.mode === TreeComparator.PATCH_SWAP_NODES) {
+        // in swap-nodes mode, both are nodes to be found in the real DOM,
+        // so we search for the replacement in the real DOM
+        patch.replacement = this._resolveRealNode(patch.replacement);
+      }
+
+      return patch;
+    });
+
+    if (firstRender) {
+      // in the first render, the next previous tree will be the current newTree
+
+      this._previousVirtualDOM = document.createElement('div');
+      this._previousVirtualDOM.appendChild(newTree);
+    } else {
+      // On re-render it will be the patches previous virtual DOM
+      //this._previousVirtualDOM.replaceChild(currentTree, this._previousVirtualDOM.firstChild);
+      TreeComparator.applyPatches(patches);
+    }
   }
 
+  /*
+   * Creates a new DOM tree from the renderer output. If the renderer output
+   * is a string, we will get the dom by using the this._parsingService.
+   * If it is a DOM tree, we do not anything.
+   */
+  _getDOMFromRendererOutput(htmlContents, callback) {
+    if (typeof htmlContents === 'string') {
+      // We need to parse
+
+      htmlContents = this.renderer().trim();
+      var correctedHtmlContents = htmlContents;
+      // construct the new tree given by the render function
+      // fix: for roots starting with TR, TD or TH, they cannot be direct
+      // childs of div, they must be inside of a table to parse them with 
+      // innerHTML
+      if (htmlContents.match(/^<tr .*/i) !== null) {
+        // trees starting with TR
+        correctedHtmlContents = '<table><tbody>' + htmlContents + '</tbody></table>';
+      } else if (htmlContents.match(/^<t[dh] .*/i) !== null) {
+        // trees starting with TD or TH
+        correctedHtmlContents = '<table><tbody><tr>' + htmlContents + '</tr></tbody></table>';
+      }
+
+      let newTree = document.createElement('div');
+
+      this._parsingService.parse(correctedHtmlContents, (node) => {
+        if (htmlContents.match(/^<tr .*/i) !== null) {
+          newTree.appendChild(node.firstChild.firstChild);
+        } else if (htmlContents.match(/^<t[dh] .*/i) !== null) {
+          newTree.appendChild(node.firstChild.firstChild.firstChild);
+        } else {
+
+
+          newTree.appendChild(node);
+        }
+        if (newTree.childNodes.length > 1) {
+          throw 'Rendering function MUST return a tree with a single root element ' + newTree.innerHTML;
+        }
+
+        callback(newTree.firstChild);
+      });
+    } else {
+
+      // htmlContents is a real DOM
+      callback(htmlContents);
+    }
+  }
+
+  _resolveRealNode(node) {
+
+    // if the node has an id of a child node, we find it via id
+    if (node.id !== undefined && this.childComponentIds[node.id] !== undefined) {
+      return document.getElementById(node.id);
+    }
+
+    // use the reference from the node to its corresponding clone in the real DOM
+    let result = node.realNode;
+
+    // No realNode? try to find by id (this is needed for the first render, where the new root node
+    // has the id of the slot of the component)
+    if (result === null || result === undefined && node.id !== undefined) {
+      result = document.getElementById(node.id);
+    }
+
+    return result;
+  }
+
+  _resetVirtualDOM() {
+    this._previousVirtualDOM = null;
+    this._nodesWithFrontyComponentAttribute = [];
+  }
+
+  /*
+   * Restores the child subtrees in their corresponding slots.
+   */
   _restoreChildNodes(savedChildNodes) {
-    this.childComponents.forEach((childComponent) => {
+    for (let i = 0; i < this.childComponents.length; i++) {
+      var childComponent = this.childComponents[i];
       var childId = childComponent.getHtmlNodeId();
       if (this._getChildNode(childId) !== null && childId in savedChildNodes) {
         var currentComponentNode = this._getChildNode(childId);
@@ -612,218 +650,257 @@ class Component {
           currentComponentNode.parentNode.replaceChild(savedChildNodes[childId], currentComponentNode);
         }
       }
-    });
+    }
   }
 
+  /*
+   * Creates and returns an index of child node ids to their current DOM element.
+   */
   _saveChildNodes() {
-    var savedChildNodes = [];
-    this.childComponents.forEach((childComponent) => {
+    var savedChildNodes = {};
+    for (let i = 0; i < this.childComponents.length; i++) {
+      var childComponent = this.childComponents[i];
       var childId = childComponent.getHtmlNodeId();
       if (this._getChildNode(childId) !== null) {
         savedChildNodes[childId] = this._getChildNode(childId);
       }
-    });
-    return savedChildNodes;
+    }
 
+    return savedChildNodes;
   }
+
   _getComponentNode() {
     return document.getElementById(this.getHtmlNodeId());
   }
 
   _getChildNode(childId) {
-    return this._getComponentNode().querySelector('#' + childId);
+    return document.getElementById(childId);
   }
 
-  _doRender(callback) {
-    if (this.rendering === true) {
-      //avoid recursion
-      return;
+  /*
+   * Clones a DOM tree, while keeping references from original nodes to their
+   * corresponding clones. Moreover, it creates the _nodesWithFrontyComponentAttribute
+   * index.
+   */
+  _cloneAndIndex(root) {
+    let clone = root.cloneNode();
+    root.realNode = clone;
+
+    if (root.nodeType === Node.ELEMENT_NODE && root.hasAttribute('fronty-component')) {
+      this._nodesWithFrontyComponentAttribute.push(root);
+    }
+    for (let i = 0; i < root.childNodes.length; i++) {
+      clone.appendChild(this._cloneAndIndex(root.childNodes[i]));
     }
 
-    this.rendering = true;
-    if (this.stopped || !this.htmlNodeId || this._getComponentNode() === null) {
-      this.rendering = false;
-      return;
-    }
-
-    this.beforeRender();
-
-    var htmlContents = this.renderer().trim();
-
-    callback(htmlContents);
-
-    this._updateEventListeners();
-
-    this._createTagChildComponents();
-
-    this.afterRender();
-
-    this.rendering = false;
+    return clone;
   }
 
-  _indexNodes(root) {
-    if (root.nodeType === Node.ELEMENT_NODE) {
-      if (root.hasAttribute('frontyid')) {
-        this._realDOMNodeMapping.elements[root.getAttribute('frontyid')] = root;
-        if (root.hasAttribute('id') && this.childComponentIds[root.id] !== undefined) {
-          this._mappingIdsOfChilds[root.getAttribute('frontyid')] = root.id;
-        }
+  /*
+   * Creates child nodes dynamically.
+   * In addition, it also removes previously created child components whose slots
+   * are no longer available.
+   */
+  _createChildComponents() {
 
-        root.removeAttribute('frontyid');
-      }
-      if (root.hasAttribute('fronty-component')) {
-        if (!this._nodesWithFrontyComponentAttribute) {
-          this._nodesWithFrontyComponentAttribute = [];
-        }
-        this._nodesWithFrontyComponentAttribute.push(root);
-      }
-      for (var i = 0; i < root.childNodes.length; i++) {
-        this._indexNodes(root.childNodes[i]); //
-      }
-
-    }
-
-    if (root.nodeType === Node.TEXT_NODE) {
-      var comment = root.nextSibling;
-      if (comment !== null) {
-        var id = comment.nodeValue.replace(/fronty-text-node: /g, '');
-        this._realDOMNodeMapping.text_nodes[id] = root;
-      }
-    }
-
-    if (root.nodeType === Node.COMMENT_NODE) {
-      var comment_id = root.nodeValue.replace(/fronty-text-node: /g, '');
-      this._realDOMNodeMapping.comment_nodes[comment_id] = root;
-    }
-  }
-
-  _tagTree(tree) {
-    if (tree.nodeType === Node.ELEMENT_NODE) {
-      tree.setAttribute('frontyid', this._generatedIdsCounter++);
-      for (var i = 0; i < tree.childNodes.length; i++) {
-        this._tagTree(tree.childNodes[i]);
-      }
-    }
-
-    if (tree.nodeType === Node.TEXT_NODE) {
-      var comment = document.createComment('fronty-text-node: ' + this._generatedIdsCounter++);
-      if (tree.nextSibling === null) {
-        tree.parentNode.appendChild(comment);
-      } else {
-        tree.parentNode.insertBefore(comment, tree.nextSibling);
-      }
-    }
-  }
-
-  _createTagChildComponents() {
-
-    // create childs by tag
     if (!this.childComponentsByClassName) {
       this.childComponentsByClassName = {};
     }
-    this.childTags.forEach((childTag) => {
+
+    // create childs by tag
+    this._createTagBasedChildComponents();
+
+    // create childs by fronty-component attribute
+    this._createAttributeBasedChildComponents();
+
+    // remove children that have been dynamically created and their slots
+    // are no longer present
+    this._childrenGC();
+
+  }
+
+  /*
+   * Creates components nodes dynamically for elements with the custom tag <ClassName ...>
+   */
+  _createTagBasedChildComponents() {
+
+    let bufferedParsingService = new Component.BufferedParsingService();
+    bufferedParsingService.start();
+
+    for (let i = 0; i < this.childTags.length; i++) {
+      let childTag = this.childTags[i];
       if (!this.childComponentsByClassName[childTag]) {
-        this.childComponentsByClassName[childTag] = [];
+        this.childComponentsByClassName[childTag] = {};
       }
       var childTagElements = Array.from(this._getComponentNode().getElementsByTagName(childTag));
 
-      for (var i = 0; i < childTagElements.length; i++) {
+      for (let i = 0; i < childTagElements.length; i++) {
         var childTagElement = childTagElements[i];
         var itemId = childTagElement.getAttribute('id');
 
         // create component if there is no child component for this id yet
         if (!this.getChildComponent(itemId)) {
-          var component = this.createChildComponent(childTag, childTagElement, itemId);
-          if (component) {
-            component.setHtmlNodeId(itemId);
-            this.addChildComponent(component);
-            this.childComponentsByClassName[childTag].push(component);
-          }
+          this._createAndAddChildComponent(childTag, childTagElement, itemId, bufferedParsingService);
         }
       }
-    });
+    }
+    bufferedParsingService.finish();
+  }
 
-    // create childs by fronty-component attribute
+  /*
+   * Creates child components dynamically for elements containing the "fronty-component=className"
+   * attribute.
+   */
+  _createAttributeBasedChildComponents() {
+
+    let bufferedParsingService = new Component.BufferedParsingService();
+    bufferedParsingService.start();
+
     if (!this._nodesWithFrontyComponentAttribute) {
       this._nodesWithFrontyComponentAttribute = [];
     }
-    for (var j = this._nodesWithFrontyComponentAttribute.length - 1; j >= 0; j--) {
+
+    for (let j = this._nodesWithFrontyComponentAttribute.length - 1; j >= 0; j--) {
       var node = this._nodesWithFrontyComponentAttribute[j];
       var nodeId = node.getAttribute('id');
       var className = node.getAttribute('fronty-component');
 
-      if (this._getComponentNode().querySelector('#' + nodeId) !== null) {
+      if (document.getElementById(nodeId) !== null) {
+
         if (!this.getChildComponent(nodeId)) {
-          var component = this.createChildComponent(className, node, nodeId);
-          if (component) {
-            component.setHtmlNodeId(nodeId);
-            this.addChildComponent(component);
-            if (this.childComponentsByClassName[className] === undefined) {
-              this.childComponentsByClassName[className] = [];
-            }
-            this.childComponentsByClassName[className].push(component);
-          }
+          this._createAndAddChildComponent(className, node, nodeId, bufferedParsingService);
         }
       } else {
         this._nodesWithFrontyComponentAttribute.splice(j, 1);
       }
     }
+    bufferedParsingService.finish();
+  }
 
-    // clean childs that have disappear
-    Object.keys(this.childComponentsByClassName).forEach((childTag) => {
-      for (var j = this.childComponentsByClassName[childTag].length - 1; j >= 0; j--) {
-        var childComponent = this.childComponentsByClassName[childTag][j];
-        if ( /*childIds.indexOf(childComponent.getHtmlNodeId()) === -1 &&*/
-          this._getComponentNode().querySelector('#' + childComponent.getHtmlNodeId()) === null) {
+  /* 
+   * Cleans remaining children that have disappear (these are tag based childs, fronty-component
+   * childs have been deleted just before).
+   */
+  _childrenGC() {
+    var childTags = Object.keys(this.childComponentsByClassName);
+    for (let i = 0; i < childTags.length; i++) {
+      var childTag = childTags[i];
+      var componentIdsInTag = Object.keys(this.childComponentsByClassName[childTag]);
+      for (let j = componentIdsInTag.length - 1; j >= 0; j--) {
+        var childComponent = this.childComponentsByClassName[childTag][componentIdsInTag[j]];
+
+        if (document.getElementById(childComponent.getHtmlNodeId()) === null) {
 
           this.removeChildComponent(childComponent);
-          this.childComponentsByClassName[childTag].splice(j, 1);
+          delete this.childComponentsByClassName[childTag][childComponent.getHtmlNodeId()];
         }
       }
-    });
+    }
+  }
+
+  /* 
+   * Instantiates and indexes a new child component dynamically.
+   */
+  _createAndAddChildComponent(className, element, id, parsingService) {
+    let component = this.createChildComponent(className, element, id);
+    if (component) {
+      component.setHtmlNodeId(id);
+      let prevParsingService = component._parsingService;
+      component._parsingService = parsingService;
+      this.addChildComponent(component);
+      component._parsingService = prevParsingService;
+
+      if (this.childComponentsByClassName[className] === undefined) {
+        this.childComponentsByClassName[className] = {};
+      }
+
+      this.childComponentsByClassName[className][id] = component;
+    }
   }
 
   // event listeners "private" methods
 
+  // global event listener for this component. All events are dispatched first by
+  // this function. If the target of the event matches one of the listener's query
+  // indicated in {@link Component#addEventListener}, the
+  // event is redirected to the provided callback function.
+  _eventsListener(event) {
+    for (let i = 0; i < this.eventListeners.length; i++) {
+      let listener = this.eventListeners[i];
+      if (event.target.matches(listener.query) && listener.eventType === event.type) {
+        event.preventDefault();
+        listener.callback(event);
+        return;
+      }
+    }
+  }
+
+  // place the global event listener in the root of this component
   _updateEventListeners() {
-    this._clearAllEventListeners();
-    Object.getOwnPropertyNames(this.eventListeners).forEach((nodesQuery) => {
-      this.eventListeners[nodesQuery].forEach((listenerSpec) => {
-        console.log('Component [#' + this.htmlNodeId + ']: adding listener ' + nodesQuery);
-        this._addEventListener(
-          nodesQuery, listenerSpec.eventType, listenerSpec.callback);
-      });
-    });
-  }
-
-  _clearAllEventListeners() {
-    if (this._listeners) {
-      this._listeners.forEach((listenerSpec) => {
-        console.log('Component [#' + this.htmlNodeId + ']: removing listener');
-        listenerSpec.node.removeEventListener(
-          listenerSpec.eventType, listenerSpec.callback);
-      });
-      this._listeners = [];
-    }
-  }
-
-  _addEventListener(nodesQuery, eventType, callback) {
-    if (!this._listeners) {
-      this._listeners = [];
-    }
-
-    if (this.htmlNodeId && this._getComponentNode()) {
-      this._getComponentNode().querySelectorAll(nodesQuery).forEach((element) => {
-        element.addEventListener(eventType, callback);
-        this._listeners.push({
-          node: element,
-          eventType: eventType,
-          callback: callback
-        });
-      });
+    var rootNode = this._getComponentNode();
+    if (rootNode !== null) {
+      for (let i = 0; i < this.eventListeners.length; i++) {
+        let listener = this.eventListeners[i];
+        rootNode.removeEventListener(listener.eventType, this._boundEventsListener);
+        rootNode.addEventListener(listener.eventType, this._boundEventsListener);
+      }
     }
   }
 }
+
+// A simple parsing service that immediately parses the html content and
+// calls the callback with the results
+Component.ParsingService = class ParsingService {
+  parse(htmlContents, callback) {
+    var elem = document.createElement('div');
+    elem.innerHTML = htmlContents;
+    callback(elem.firstChild);
+  }
+};
+
+// A parsing service that accumulates parsing requests with an associated callback
+// to pass the results when available. When the finish() method
+// is called, all html received previously is parsed in a row and the corresponding callbacks
+// are invoked.
+Component.BufferedParsingService = class BufferedParsingService extends Component.ParsingService {
+  constructor() {
+    super();
+    this.currentHTML = '';
+    this.counter = 0;
+    this.callbacks = [];
+  }
+
+  start() {
+    this.counter = 0;
+    this.currentHTML = '';
+    this.callbacks = [];
+  }
+
+  finish() {
+    if (this.callbacks.length > 0) {
+      this.parsedTree = document.createElement('div');
+      this.parsedTree.innerHTML = this.currentHTML;
+
+      for (let i = 0; i < this.callbacks.length; i++) {
+        var callback = this.callbacks[i];
+        callback();
+      }
+    }
+  }
+
+  parse(html, callback) {
+    this.currentHTML += '<div>' + html + '</div>';
+    var currentCounter = this.counter;
+    this.callbacks.push(() => {
+      callback(this.parsedTree.childNodes[currentCounter].firstChild);
+    });
+    this.counter++;
+  }
+
+};
+
+Component._defaultParsingService = new Component.ParsingService();
+
 
 /*********** DOM TREE DIFF & PATCH *******/
 /**
@@ -842,9 +919,9 @@ class TreeComparator {
    * An optional function can be provided to control how different subtrees are
    * compared. This function receives two nodes (node1, node2) and can return:
    * <ul>
-   * <li>'DIFF': The comparison should be done as normal.</li>
-   * <li>'SKIP': The comparison should not go deeper.</li>
-   * <li>'REPLACE': The node1 should be totally replaced by the node2,
+   * <li>TreeComparator.COMPARE_POLICY_DIFF: The comparison should be done as normal.</li>
+   * <li>TreeComparator.COMPARE_POLICY_SKIP: The comparison should not go deeper.</li>
+   * <li>TreeComparator.COMPARE_POLICY_REPLACE: The node1 should be totally replaced by the node2,
    * without going deeper</li>
    * </ul>
    * @param {Node} node1 The root element of the first tree to compare.
@@ -855,38 +932,52 @@ class TreeComparator {
   static diff(node1, node2, comparePolicy) {
     if (comparePolicy) {
       var actionToDo = comparePolicy(node1, node2);
-      if (actionToDo === 'SKIP') {
+      if (actionToDo === TreeComparator.COMPARE_POLICY_SKIP) {
         return [];
-      } else if (actionToDo === 'REPLACE') {
+      } else if (actionToDo === TreeComparator.COMPARE_POLICY_REPLACE) {
         return [{
+          mode: TreeComparator.PATCH_REPLACE_NODE,
           toReplace: node1,
           replacement: node2
         }];
-      } //otherwise, i.e.: 'DIFF', do nothing
+      } //otherwise, i.e.: TreeComparator.COMPARE_POLICY_DIFF, do nothing
     }
 
     var result = [];
 
-    if (node1 === null ||
-      node1.tagName !== node2.tagName ||
-      node1.nodeType !== node2.nodeType ||
-      (
-        node1.nodeValue !== null &&
-        node2.nodeValue !== null &&
-        node1.nodeValue !== node2.nodeValue
-      )) {
+    if (node1 !== null && node1.tagName === node2.tagName && node1.nodeType === node2.nodeType) {
+      // equal tagName and nodeType, compare children...
+      if (node1.childNodes.length > 0 || node2.childNodes.length > 0) {
+        TreeComparator._compareChildren(node1, node2, comparePolicy, result);
+      }
+    } else {
+      // different tagName, nodeType, complete replacement
       return [{
+        mode: TreeComparator.PATCH_REPLACE_NODE,
         toReplace: node1,
         replacement: node2
       }];
-
-    } else if (node1.childNodes.length > 0 || node2.childNodes.length > 0) { //lets look at children
-      TreeComparator._compareChildren(node1, node2, comparePolicy, result);
     }
 
+    if (
+      (node1.nodeType === Node.TEXT_NODE || node1.nodeType === Node.COMMENT_NODE) &&
+      node1.nodeValue !== null &&
+      node2.nodeValue !== null &&
+      node1.nodeValue !== node2.nodeValue
+    ) {
+      // for text and comment nodes, we compare their nodeValue. Text nodes and
+      // comment nodes have no chidren, so we return immediately.
+      return [{
+        mode: TreeComparator.PATCH_SET_NODE_VALUE,
+        toReplace: node1,
+        replacement: node2
+      }];
+    }
+    
     if (!TreeComparator._equalAttributes(node1, node2)) {
+      // if there are some differences in attributtes, add this patch also.
       result.push({
-        mode: 'attributes',
+        mode: TreeComparator.PATCH_SET_ATTRIBUTES,
         toReplace: node1,
         replacement: node2
       });
@@ -895,42 +986,99 @@ class TreeComparator {
   }
 
   static _compareChildren(node1, node2, comparePolicy, result) {
-    var keyElementIndexNode1 = {};
-    var keyElementIndexNode2 = {};
-    TreeComparator._buildChildrenKeyIndex(node1, node2, keyElementIndexNode1, keyElementIndexNode2);
-    var child1pos = 0;
-    var child2pos = 0;
-    var insertions = 0;
-    var deletions = 0;
-    var child1Array = Array.from(node1.childNodes); //copy node1 childs to an array, sinde we will do some swaps here, but we do not want to do them in DOM now
+
+    let child1pos = 0;
+    let child2pos = 0;
+    let insertions = 0;
+    let deletions = 0;
+
+    // create a copy-on-write array for node1.childNodes. We will keep track
+    // of the performed swap operations without modifying the original node1.childNodes
+    let node1ChildNodes = [];
+
+    let node1Keys = TreeComparator._buildChildrenKeyIndex(node1);
+    let node2Keys = TreeComparator._buildChildrenKeyIndex(node2);
 
     while (child1pos < node1.childNodes.length && child2pos < node2.childNodes.length) {
-      var child1 = child1Array[child1pos];
-      var child2 = node2.childNodes[child2pos];
+      let child1 = node1ChildNodes[child1pos] ? node1ChildNodes[child1pos] : node1.childNodes[child1pos];
+      let child2 = node2.childNodes[child2pos];
 
-      if (child1.nodeType !== Node.ELEMENT_NODE && child2.nodeType === Node.ELEMENT_NODE) {
+      if (child1.nodeType === Node.ELEMENT_NODE && child2.nodeType === Node.ELEMENT_NODE) {
+        let key1 = child1.getAttribute('key'); // maybe null (no-key)
+        let key2 = child2.getAttribute('key'); // maybe null (no-key)
+
+        if (key1 !== key2) {
+          if ((key1 in node2Keys) && (key2 in node1Keys)) {
+
+            //both nodes are in the initial and final result, so we only need to swap them
+            result.push({
+              mode: TreeComparator.PATCH_SWAP_NODES,
+              toReplace: child1,
+              replacement: node1.childNodes[node1Keys[key2].pos]
+            });
+
+            // swap elements in the node1ChildNodes
+            var temp = node1ChildNodes[child1pos] ? node1ChildNodes[child1pos] : node1.childNodes[child1pos];
+            node1ChildNodes[child1pos] = node1ChildNodes[node1Keys[key2].pos] ? node1ChildNodes[node1Keys[key2].pos] : node1.childNodes[node1Keys[key2].pos];
+            node1ChildNodes[node1Keys[key2].pos] = temp;
+
+          } else {
+            //both nodes are NOT in the initial and final result
+            if (!(key2 in node1Keys)) {
+              // if a key element in the new result is missing in the current tree, we should insert it
+              result.push({
+                mode: TreeComparator.PATCH_INSERT_NODE,
+                toReplace: node1,
+                replacement: child2,
+                beforePos: child1pos + insertions - deletions
+              });
+              insertions++;
+              child2pos++;
+
+            }
+            // and if a key element in the current result is missing in the new result, we should remove it
+            if (!(key1 in node2Keys)) {
+              result.push({
+                mode: TreeComparator.PATCH_REMOVE_NODE,
+                toReplace: child1
+              });
+              child1pos++;
+              deletions++;
+
+            }
+          }
+
+        } else {
+          // both keys are equals (same key OR both null)
+          result.push.apply(result, TreeComparator.diff(
+            child1,
+            child2,
+            comparePolicy));
+
+          child1pos++;
+          child2pos++;
+        }
+      } else if (child1.nodeType !== Node.ELEMENT_NODE && child2.nodeType === Node.ELEMENT_NODE) {
+        // "strange" non-element nodes on current tree are removed
         result.push({
-          mode: 'remove-node',
+          mode: TreeComparator.PATCH_REMOVE_NODE,
           toReplace: child1
         });
         child1pos++;
         deletions++;
-        continue;
-      }
-
-      if (child1.nodeType === Node.ELEMENT_NODE && child2.nodeType !== Node.ELEMENT_NODE) {
+      } else if (child1.nodeType === Node.ELEMENT_NODE && child2.nodeType !== Node.ELEMENT_NODE) {
+        // new non-element nodes on new tree are inserted
         result.push({
-          mode: 'insert-node',
+          mode: TreeComparator.PATCH_INSERT_NODE,
           toReplace: node1,
           replacement: child2,
           beforePos: child1pos + insertions - deletions
         });
         insertions++;
         child2pos++;
-        continue;
-      }
-
-      if (child1.nodeType !== Node.ELEMENT_NODE && child2.nodeType !== Node.ELEMENT_NODE) {
+        
+      } else if (child1.nodeType !== Node.ELEMENT_NODE && child2.nodeType !== Node.ELEMENT_NODE) {
+        // both non-element nodes are compared
         var partial =
           TreeComparator.diff(
             child1,
@@ -940,72 +1088,20 @@ class TreeComparator {
 
         child1pos++;
         child2pos++;
-        continue;
-      }
-
-      var key1 = child1.getAttribute('key'); // maybe null (no-key)
-      var key2 = child2.getAttribute('key'); // maybe null (no-key)
-
-      if (key1 !== key2) {
-        if ((key1 in keyElementIndexNode2) && (key2 in keyElementIndexNode1)) {
-
-          //both nodes are in the initial and final result, so we only need to swap them
-          result.push({
-            mode: 'swap-nodes',
-            toReplace: child1,
-            replacement: node1.childNodes[keyElementIndexNode1[key2].pos]
-          });
-          TreeComparator._swapArrayElements(child1Array, child1pos, keyElementIndexNode1[key2].pos);
-
-        } else {
-          //both nodes are NOT in the initial and final result
-          if (!(key2 in keyElementIndexNode1)) {
-            // if a key element in the new result is missing in the current tree, we should insert it
-            result.push({
-              mode: 'insert-node',
-              toReplace: node1,
-              replacement: child2,
-              beforePos: child1pos + insertions - deletions
-            });
-            insertions++;
-            child2pos++;
-
-          }
-          // and if a key element in the current result is missing in the new result, we should remove it
-          if (!(key1 in keyElementIndexNode2)) {
-            result.push({
-              mode: 'remove-node',
-              toReplace: child1
-            });
-            child1pos++;
-            deletions++;
-
-          }
-        }
-
-      } else {
-        // both keys are equals (same key OR both null)
-        result.push.apply(result, TreeComparator.diff(
-          child1,
-          child2,
-          comparePolicy));
-
-        child1pos++;
-        child2pos++;
       }
     }
 
     if (child1pos < node1.childNodes.length) {
-      for (var i = child1pos; i < node1.childNodes.length; i++) {
+      for (let i = child1pos; i < node1.childNodes.length; i++) {
         result.push({
-          mode: 'remove-node',
+          mode: TreeComparator.PATCH_REMOVE_NODE,
           toReplace: node1.childNodes[i]
         });
       }
     } else if (child2pos < node2.childNodes.length) {
-      for (var j = child2pos; j < node2.childNodes.length; j++) {
+      for (let j = child2pos; j < node2.childNodes.length; j++) {
         result.push({
-          mode: 'append-child',
+          mode: TreeComparator.PATCH_APPEND_CHILD,
           toReplace: node1,
           replacement: node2.childNodes[j]
         });
@@ -1019,68 +1115,48 @@ class TreeComparator {
     arr[indexB] = temp;
   }
 
-  static _buildChildrenKeyIndex(node1, node2, keyElementIndexNode1, keyElementIndexNode2) {
-
-    //check if node2 children are all key-based 
-    var child1pos = -1;
-    node2.childNodes.forEach((node) => {
-      child1pos++;
-      if (node.nodeType === Node.ELEMENT_NODE) {
-        var key = node.getAttribute('key');
+  static _buildChildrenKeyIndex(node) {
+    let index = {};
+    let childpos = -1;
+    for (let i = 0; i < node.childNodes.length; i++) {
+      let child = node.childNodes[i];
+      childpos++;
+      if (child.nodeType === Node.ELEMENT_NODE) {
+        let key = child.getAttribute('key');
         if (key) {
-          keyElementIndexNode2[key] = {
-            node: node,
-            pos: child1pos
+          index[key] = {
+            node: child,
+            pos: childpos
           };
         }
       }
-    });
-
-    var child2pos = -1;
-    node1.childNodes.forEach((node) => {
-      child2pos++;
-      if (node.nodeType === Node.ELEMENT_NODE) {
-        var key = node.getAttribute('key');
-        if (key) {
-          keyElementIndexNode1[key] = {
-            node: node,
-            pos: child2pos
-          };
-        }
-      }
-    });
-    //  return check;
-    return true;
+    }
+    return index;
   }
 
   static _equalAttributes(node1, node2) {
+    if (!node1.attributes && !node2.attributes) {
+      return true;
+    }
+
     if (!node1.attributes && node2.attributes ||
       node1.attributes && !node2.attributes) {
       return false;
     }
 
-    if (!node1.attributes && !node2.attributes) {
-      return true;
-    }
-    var skipAttributes = (attribute) => {
-      return attribute.name !== 'frontyid'; //TODO: receive this id as paremeter
-    };
-    var node1Attributes = Array.from(node1.attributes).filter(skipAttributes);
-    var node2Attributes = Array.from(node2.attributes).filter(skipAttributes);
+    //TODO: receive this id as paremeter
 
-    if (
-      node1Attributes &&
-      node1Attributes.length != node2Attributes.length) {
+    if (node1.attributes.length !== node2.attributes.length) {
       return false;
-    } else if (node1Attributes) {
-      for (var i = 0; i < node1Attributes.length; i++) {
-        //if (node1Attributes[i].name === 'frontyid') continue;
-        if (node1Attributes[i].name != node2Attributes[i].name ||
-          node1Attributes[i].value != node2Attributes[i].value) {
-          return false;
-        }
+    }
+
+    for (let i = 0; i < node1.attributes.length; i++) {
+      if (node1.attributes[i].name != node2.attributes[i].name ||
+        node1.attributes[i].value != node2.attributes[i].value) {
+        return false;
       }
     }
+
     return true;
   }
 
@@ -1097,60 +1173,78 @@ class TreeComparator {
    *
    * @param patches Patches previously computed with {@link TreeComparator.diff}
    */
-  static applyPatches(patches, skipAttributes, patchMapping) {
-    patches.forEach((patch) => {
+  static applyPatches(patches, patchMapping) {
+    for (let i = 0; i < patches.length; i++) {
+      var patch = patches[i];
       if (patchMapping !== undefined) {
         patch = patchMapping(patch);
       }
       // HTML nodes
       var toReplace = patch.toReplace;
       var replacement = patch.replacement;
-      if (patch.mode === 'attributes') {
-        var attribute = null;
-        for (var i = 0; i < replacement.attributes.length; i++) {
-          attribute = replacement.attributes[i];
-          if (attribute.name === 'value' &&
-            toReplace.value != attribute.value) {
-            toReplace.value = attribute.value;
-          }
-          if (attribute.name === 'checked') {
-            toReplace.checked =
-              (attribute.checked !== false) ? true : false;
-          }
-
-          if (skipAttributes === undefined || skipAttributes.indexOf(attribute.name) === -1 || !toReplace.hasAttribute(attribute.name)) {
+      switch (patch.mode) {
+        case TreeComparator.PATCH_SET_ATTRIBUTES:
+          var attribute = null;
+          for (let i = 0; i < replacement.attributes.length; i++) {
+            attribute = replacement.attributes[i];
+            if (attribute.name === 'value' &&
+              toReplace.value != attribute.value) {
+              toReplace.value = attribute.value;
+            }
+            if (attribute.name === 'checked') {
+              toReplace.checked =
+                (attribute.checked !== false) ? true : false;
+            }
             toReplace.setAttribute(attribute.name, attribute.value);
           }
-        }
 
-        for (var j = toReplace.attributes.length - 1; j >= 0; j--) {
-          attribute = patch.toReplace.attributes[j];
-          if (!replacement.hasAttribute(attribute.name)) {
-            if (attribute.name === 'checked') {
-              toReplace.checked = false;
+          for (let j = toReplace.attributes.length - 1; j >= 0; j--) {
+            attribute = patch.toReplace.attributes[j];
+            if (!replacement.hasAttribute(attribute.name)) {
+              if (attribute.name === 'checked') {
+                toReplace.checked = false;
+              }
+              toReplace.removeAttribute(attribute.name);
             }
-            toReplace.removeAttribute(attribute.name);
           }
-        }
-      } else if (patch.mode === 'remove-node') {
-        patch.toReplace.parentNode.removeChild(patch.toReplace);
-      } else if (patch.mode === 'append-child') {
-        patch.toReplace.appendChild(patch.replacement);
-      } else if (patch.mode === 'insert-node') {
-        if (patch.toReplace.childNodes.length === 0) {
+          break;
+        case TreeComparator.PATCH_SET_NODE_VALUE:
+          patch.toReplace.nodeValue = patch.replacement.nodeValue;
+
+          break;
+        case TreeComparator.PATCH_REMOVE_NODE:
+          patch.toReplace.parentNode.removeChild(patch.toReplace);
+          break;
+        case TreeComparator.PATCH_APPEND_CHILD:
           patch.toReplace.appendChild(patch.replacement);
-        } else {
-          patch.toReplace.insertBefore(patch.replacement, patch.toReplace.childNodes[patch.beforePos]);
-        }
-      } else if (patch.mode === 'swap-nodes') {
-        TreeComparator._swapElements(patch.toReplace, patch.replacement);
-      } else {
-        toReplace.parentNode.replaceChild(replacement, toReplace);
+          break;
+        case TreeComparator.PATCH_INSERT_NODE:
+          if (patch.toReplace.childNodes.length === 0) {
+            patch.toReplace.appendChild(patch.replacement);
+          } else {
+            patch.toReplace.insertBefore(patch.replacement, patch.toReplace.childNodes[patch.beforePos]);
+          }
+          break;
+        case TreeComparator.PATCH_SWAP_NODES:
+          TreeComparator._swapElements(patch.toReplace, patch.replacement);
+          break;
+        case TreeComparator.PATCH_REPLACE_NODE:
+          toReplace.parentNode.replaceChild(replacement, toReplace);
       }
-    });
+    }
   }
 }
+TreeComparator.PATCH_INSERT_NODE = 0;
+TreeComparator.PATCH_REMOVE_NODE = 1;
+TreeComparator.PATCH_SWAP_NODES = 2;
+TreeComparator.PATCH_APPEND_CHILD = 3;
+TreeComparator.PATCH_REPLACE_NODE = 4;
+TreeComparator.PATCH_SET_NODE_VALUE = 5;
+TreeComparator.PATCH_SET_ATTRIBUTES = 6;
 
+TreeComparator.COMPARE_POLICY_SKIP = 0;
+TreeComparator.COMPARE_POLICY_REPLACE = 1;
+TreeComparator.COMPARE_POLICY_DIFF = 2;
 /**
  * A Model is a general-purpose, observable object, holding user specific data.
  *
@@ -1206,9 +1300,10 @@ class Model {
    * @param {Object} [hint] An optional object to pass as argument to observers.
    */
   notifyObservers(hint) {
-    this.observers.forEach((observer) => {
+    for (let i = 0; i < this.observers.length; i++) {
+      let observer = this.observers[i];
       observer(this, hint);
-    });
+    }
   }
 
   /**
@@ -1306,16 +1401,19 @@ class ModelComponent extends Component {
     } else if (model instanceof Model) {
       this.models = [model];
     } else if (model instanceof Array) {
-      model.forEach((model) => {
-        if (!(model instanceof Model)) {
+
+      for (let i = 0; i < model.length; i++) {
+        let modelItem = model[i];
+        if (!(modelItem instanceof Model)) {
           throw 'Component [' + this.htmlNodeId + ']: the model must inherit Model';
         }
-      });
+      }
+
       this.models = model;
     } else {
       throw 'Component [' + this.htmlNodeId + ']: the model must inherit Model';
     }
-    
+
     this.updater = this.update.bind(this); // the update function bound to this
   }
 
@@ -1335,34 +1433,37 @@ class ModelComponent extends Component {
   stop() {
 
     if (this.stopped === false) {
-      this.models.forEach((model) => {
+      for (let i = 0; i < this.models.length; i++) {
+        let model = this.models[i];
         model.removeObserver(this.updater);
-      });
+      }
     }
     super.stop();
   }
 
   start() {
     if (this.stopped) {
-      this.models.forEach((model) => {
+      for (let i = 0; i < this.models.length; i++) {
+        let model = this.models[i];
         model.addObserver(this.updater);
-      });
+      }
     }
     super.start();
   }
 
   _mergeModelInOneObject() {
     var context = {};
-    this.models.forEach((model) => {
+    for (let i = 0; i < this.models.length; i++) {
+      let model = this.models[i];
       context = Object.assign(context, model);
-    });
+    }
     return context;
   }
 
   /** 
    * Overrides the child Component creation by also considering a "model"
    * attribute in the tag.<br>
-   * The model attribute is evaluated with eval() and calls 
+   * The model attribute is used as a path inside the model object and calls 
    * {@link ModelComponent#createChildModelComponent}.
    * @example
    * <!-- How to add a model attribute in the HTML child tag -->
@@ -1376,9 +1477,24 @@ class ModelComponent extends Component {
    * @see {@link Component#childTags}
    */
   createChildComponent(className, element, id) {
-    var oneModelObject = this._mergeModelInOneObject();
-    var modelItem = null;
-    if (element.getAttribute('model')) {
+    let oneModelObject = this._mergeModelInOneObject();
+
+    let modelAtt = element.getAttribute('model');
+    let modelItem = null;
+    if (modelAtt.indexOf('(') === -1) {
+      // for simple expressions, do not use eval (slower)
+      // navigate the object graph manually
+      modelItem = oneModelObject;
+      let arr = modelAtt.split(/[.\[\]]/);
+      while (arr.length) {
+        let elem = arr.shift();
+        if (elem.length !== 0) {
+          modelItem = modelItem[elem];
+        }
+      }
+
+    } else {
+      // complex including (), use eval
       modelItem = eval('oneModelObject.' + element.getAttribute('model')); //jshint ignore:line
     }
     return this.createChildModelComponent(className, element, id, modelItem);

@@ -25,7 +25,23 @@ describe('Component', () => {
     expect(document.getElementById('componentId').textContent).toBe('Hello World');
 
   });
+  
+  it('should render a static template via direct-DOM rendering', () => {//
+    var component = new Component(() => {
+      var table = document.createElement('table');
+      table.id = 'componentId';
+      table.appendChild(document.createElement('tr'));
+      table.firstChild.appendChild(document.createElement('td'));
+      table.firstChild.firstChild.appendChild(document.createTextNode('Hello World'));
+      return table;
+      
+    }, 'componentId');
 
+    component.start();
+    
+    expect(document.getElementById('componentId').textContent).toBe('Hello World');
+
+  });
   it('should render a static comment', () => {
     var component = new Component(() => '<p id="componentId"><!-- Hello World --></p>', 'componentId');
 
@@ -110,7 +126,6 @@ describe('Component', () => {
     expect(document.getElementById('componentId').childNodes.length).toBe(0);
   });
   
-  
   it ('should update a simple text on re-render TWICE', () => {
     var realRenderer = () => '<div id="componentId">Foo</div>';
     var renderer = () => realRenderer();
@@ -136,6 +151,8 @@ describe('Component', () => {
     expect(document.getElementById('componentId').textContent).toBe('Foo');
     
   });  
+  
+  
   it ('should update a simple list on re-render', () => {
     var realRenderer = () => '<div id="componentId">'+
     ' <p key="item-1" class="item">item-1</p> '+

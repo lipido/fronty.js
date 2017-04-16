@@ -41,11 +41,13 @@
      re-renders, it restores its child's subtrees on their places. Child Components
      can be added manually (See <a href="Component.html#addChildComponent">Component#addChildComponent</a>) or created
      dynamically by <em>this</em> Component via 
-     custom tag elements (See <a href="Component.html#childTags">Component#childTags</a>).</li>
+     "fronty-component" attribute or via custom tag elements 
+     (See <a href="Component.html#createChildComponent">Component#createChildComponent</a> and <a href="Component.html#childTags">Component#childTags</a>).</li>
    <li>Manage event listeners, restoring them each re-rendering.</li>
  </ul>
- Components render when you call <a href="Component.html#start">start()</a>, and updates each time you call the
- <a href="Component.html#render">render()</a> function.</div>
+ <p>Components render when you call <a href="Component.html#start">start()</a>, 
+and update each time you call the <a href="Component.html#render">render()</a>
+function.</p></div>
         
     
 </header>
@@ -193,7 +195,9 @@
 
             
 
-            <td class="description last">An optional Array of strings of custom-tags for dynamically created child Components.</td>
+            <td class="description last">An optional Array of strings of custom-tags for
+                        dynamically created child Components 
+                       (See <a href="Component.html#createChildComponent">Component#createChildComponent</a>).</td>
         </tr>
 
     
@@ -234,7 +238,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line43">line 43</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line45">line 45</a>
     </li></ul></dd>
     
 
@@ -352,7 +356,7 @@ setInterval(() => {
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line122">line 122</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line123">line 123</a>
     </li></ul></dd>
     
 
@@ -424,7 +428,7 @@ setInterval(() => {
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line114">line 114</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line115">line 115</a>
     </li></ul></dd>
     
 
@@ -506,7 +510,7 @@ function is called.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line76">line 76</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line80">line 80</a>
     </li></ul></dd>
     
 
@@ -530,8 +534,8 @@ function is called.
 
 
 <div class="description">
-    The event listeners that this Component is managing, arranged by the HTML
-query selector. See <a href="Component.html#addEventListener">addEventListener()</a>.
+    The event listeners that this Component is managing. 
+See <a href="Component.html#addEventListener">addEventListener()</a>.
 </div>
 
 
@@ -579,7 +583,7 @@ query selector. See <a href="Component.html#addEventListener">addEventListener()
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line102">line 102</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line106">line 106</a>
     </li></ul></dd>
     
 
@@ -656,7 +660,7 @@ query selector. See <a href="Component.html#addEventListener">addEventListener()
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line68">line 68</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line72">line 72</a>
     </li></ul></dd>
     
 
@@ -735,7 +739,7 @@ Stopped Components do not render.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line91">line 91</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line95">line 95</a>
     </li></ul></dd>
     
 
@@ -769,13 +773,13 @@ Stopped Components do not render.
 
 
 <div class="description">
-    Adds a child Component to this Component.<br>
+    Adds a child Component to this Component.
 
-The HTML element where the child Component will render into do not change
-when <em>this</em> Component is re-rendered.
+<p>The HTML element where the child Component will render will not be re-rendered
+when <em>this</em> Component (the parent) is re-rendered.</p>
 
-The child component will be started or stopped if this Component is currently
-started or stopped, respectively.
+<p>The child component will be started (and thus immediately rendered) or stopped 
+if this Component is currently started or stopped, respectively.</p>
 </div>
 
 
@@ -868,7 +872,7 @@ started or stopped, respectively.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line178">line 178</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line196">line 196</a>
     </li></ul></dd>
     
 
@@ -1051,7 +1055,7 @@ attach the listener to.</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line523">line 523</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line420">line 420</a>
     </li></ul></dd>
     
 
@@ -1134,7 +1138,7 @@ intended to be overriden by subclasses.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line549">line 549</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line449">line 449</a>
     </li></ul></dd>
     
 
@@ -1217,7 +1221,7 @@ intended to be overriden by subclasses.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line542">line 542</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line442">line 442</a>
     </li></ul></dd>
     
 
@@ -1248,25 +1252,40 @@ intended to be overriden by subclasses.
 
     
 
-    <h4 class="name" id="createChildComponent"><span class="type-signature"></span>createChildComponent<span class="signature">(tagName, childTagElement, id)</span><span class="type-signature"> &rarr; {<a href="Component.html">Component</a>}</span></h4>
+    <h4 class="name" id="createChildComponent"><span class="type-signature"></span>createChildComponent<span class="signature">(className, element, id)</span><span class="type-signature"> &rarr; {<a href="Component.html">Component</a>}</span></h4>
 
     
 
 
 
 <div class="description">
-    Creates a new Component for a specified tag name to be placed in the
-place of a given HTML element. This method is intended to be overrided
+    Creates a new child Component for a specified class name to be placed in a
+given HTML element. This method is intended to be overrided
 by subclasses.
 
-By default (if not overriden), this method searches for a class with
-the same name as the tagName and instantiates an object of this class
-passing the id to it. In this sense, a parent Component
-specifying a child tag name 'ChildComponent' as this:
-<pre>new Component(renderer, 'parentId', ['ChildComponent'])</pre>
-will create instances of ChildComponent in all places where the tag
-&lt;childcomponent&gt; is found in the HTML provided by the parent
-rendereer function.
+<p>Parent components define where to create new children via their rendered 
+HTML in two ways:
+<ul>
+<li>Via <code>fronty-component</code> attribute. An element like
+<code>&lt;div fronty-component="ChildComponent"&gt;&lt;/div&gt;</code>
+indicates that <code>ChildComponent</code> instances should be created and rendered
+on that element.</li>
+
+<li>Via custom HTML tag. These tags
+must be indicated in the constructor of the component. For example:
+<code>new Component(renderer, 'parentId', ['ChildComponent'])</code>,
+indicates that <code>ChildComponent</code> should be created
+and rendered into when elements with this tag name are found.
+<b>Note:</b> Remember that custom HTML tags do not work at any
+place. For example, as child of a <code>&lt;table&gt;</code> element.</li>
+</ul></p>
+<p>Everytime a new element indicating that a child should be created, this
+method is called to create the real instance.</p>
+
+<p><b>Note:</b> By default, this function uses <code>eval(''+className)</code>
+to create the instance. If you are packing your application and this library
+in different modules, eval may fail in finding the className. You must 
+override the method to create the child.</p>
 </div>
 
 
@@ -1302,7 +1321,7 @@ rendereer function.
 
         <tr>
             
-                <td class="name"><code>tagName</code></td>
+                <td class="name"><code>className</code></td>
             
 
             <td class="type">
@@ -1318,15 +1337,14 @@ rendereer function.
 
             
 
-            <td class="description last">The HTML tag name used to place the new child Component
-in the parent HTML</td>
+            <td class="description last">The class name found in the HTML element</td>
         </tr>
 
     
 
         <tr>
             
-                <td class="name"><code>childTagElement</code></td>
+                <td class="name"><code>element</code></td>
             
 
             <td class="type">
@@ -1342,7 +1360,7 @@ in the parent HTML</td>
 
             
 
-            <td class="description last">The HTML element where the new Child will be placed</td>
+            <td class="description last">The HTML element where the new child will be placed</td>
         </tr>
 
     
@@ -1406,7 +1424,7 @@ in the parent HTML</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line211">line 211</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line242">line 242</a>
     </li></ul></dd>
     
 
@@ -1566,7 +1584,7 @@ in the parent HTML</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line261">line 261</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line292">line 292</a>
     </li></ul></dd>
     
 
@@ -1626,7 +1644,7 @@ in the parent HTML</td>
 
 
 <div class="description">
-    Gets the child Components of this Component.<br>
+    Gets the child Components of this Component.
 </div>
 
 
@@ -1670,7 +1688,7 @@ in the parent HTML</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line242">line 242</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line273">line 273</a>
     </li></ul></dd>
     
 
@@ -1774,7 +1792,7 @@ in the parent HTML</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line251">line 251</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line282">line 282</a>
     </li></ul></dd>
     
 
@@ -1834,10 +1852,10 @@ in the parent HTML</td>
 
 
 <div class="description">
-    Gets the HTML element id where this Component should render.
+    Gets the HTML element's id where this Component should render.
 
-This element will be replaced with the contents of this component
-renderer function.
+<p>This element will be replaced with the contents of this component
+renderer function.</p>
 </div>
 
 
@@ -1881,7 +1899,7 @@ renderer function.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line149">line 149</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line164">line 164</a>
     </li></ul></dd>
     
 
@@ -1986,7 +2004,7 @@ intended to be overriden by subclasses.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line556">line 556</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line456">line 456</a>
     </li></ul></dd>
     
 
@@ -2069,7 +2087,7 @@ intended to be overriden by subclasses.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line563">line 563</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line463">line 463</a>
     </li></ul></dd>
     
 
@@ -2107,9 +2125,9 @@ intended to be overriden by subclasses.
 
 
 <div class="description">
-    Removes a child Component from this Component.<br>
+    Removes a child Component from this Component.
 
-After the child removal, <em>this</em> component will re-render.
+<p>After the child removal, <em>this</em> component will re-render.</p>
 </div>
 
 
@@ -2202,7 +2220,7 @@ After the child removal, <em>this</em> component will re-render.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line226">line 226</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line257">line 257</a>
     </li></ul></dd>
     
 
@@ -2300,7 +2318,7 @@ some could be moved to another place in the DOM.</li>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line285">line 285</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line316">line 316</a>
     </li></ul></dd>
     
 
@@ -2338,10 +2356,11 @@ some could be moved to another place in the DOM.</li>
 
 
 <div class="description">
-    Sets the HTML element id where this Component should render.
+    Sets the HTML element id where this Component should render in the next
+rendering.
 
-This element will be replaced with the contents of this component
-renderer function.
+<p>The element will be replaced with the contents of this component
+renderer function.</p>
 </div>
 
 
@@ -2393,7 +2412,8 @@ renderer function.
 
             
 
-            <td class="description last">The HTML node id where this Component is rendered.</td>
+            <td class="description last">The HTML node id where this Component will
+                           be rendered.</td>
         </tr>
 
     
@@ -2434,7 +2454,7 @@ renderer function.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line161">line 161</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line178">line 178</a>
     </li></ul></dd>
     
 
@@ -2520,7 +2540,7 @@ rendered, the <a href="Component.html#onStart">onStart()</a> hook is called.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line495">line 495</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line391">line 391</a>
     </li></ul></dd>
     
 
@@ -2604,7 +2624,7 @@ Stopped Components do not render. Once this Component
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line477">line 477</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line371">line 371</a>
     </li></ul></dd>
     
 
@@ -2697,7 +2717,7 @@ Stopped Components do not render. Once this Component
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line57">line 57</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line61">line 61</a>
     </li></ul></dd>
     
 
@@ -2765,7 +2785,7 @@ Stopped Components do not render. Once this Component
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Tue Apr 04 2017 23:54:37 GMT+0200 (CEST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Mon Apr 17 2017 19:03:36 GMT+0200 (CEST)
 </footer>
 
 <script> prettyPrint(); </script>

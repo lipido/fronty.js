@@ -10,6 +10,7 @@ describe('TreeComparator', () => {
 
     expect(diff).toEqual(
       [{
+        mode: TreeComparator.PATCH_SET_NODE_VALUE,
         toReplace: node1.childNodes[0].childNodes[0], //#text: Foo
         replacement: node2.childNodes[0].childNodes[0] //#text: Bar
       }]);
@@ -29,7 +30,7 @@ describe('TreeComparator', () => {
 
     expect(diff).toEqual(
       [{
-        mode: 'append-child',
+        mode: TreeComparator.PATCH_APPEND_CHILD,
         toReplace: node1,
         replacement: node2.childNodes[1] // <p>Bar</p>
       }]);
@@ -48,7 +49,7 @@ describe('TreeComparator', () => {
 
     expect(diff).toEqual(
       [{
-        mode: 'append-child',
+        mode: TreeComparator.PATCH_APPEND_CHILD,
         toReplace: node1,
         replacement: node2.childNodes[0] // <p>Bar</p>
       }]);
@@ -67,7 +68,7 @@ describe('TreeComparator', () => {
 
     expect(diff).toEqual(
       [{
-        mode: 'remove-node',
+        mode: TreeComparator.PATCH_REMOVE_NODE,
         toReplace: node1.childNodes[0], // <p>Foo</p>
       }]);
   });
@@ -81,10 +82,12 @@ describe('TreeComparator', () => {
     var diff = TreeComparator.diff(node1, node2);
     expect(diff).toEqual(
       [{
+          mode: TreeComparator.PATCH_SET_NODE_VALUE,
           toReplace: node1.childNodes[0].childNodes[0], // #text: Foo
           replacement: node2.childNodes[0].childNodes[0] // #text: Bar
         },
         {
+          mode: TreeComparator.PATCH_SET_NODE_VALUE,
           toReplace: node1.childNodes[1].childNodes[0], // #text: Bar
           replacement: node2.childNodes[1].childNodes[0] // #text: Foo
         }
@@ -98,27 +101,54 @@ describe('TreeComparator', () => {
   it('it should do basic optimized reordering if keys are used', () => {
     var node1 = document.createElement('div');
     var node2 = document.createElement('div');
-    node1.innerHTML = '<p key="1">Foo</p><p key="2">Bar</p>';
-    node2.innerHTML = '<p key="2">Bar2</p><p key="1">Foo2</p>';
+    node1.innerHTML = '<p key="1">Foo</p> <p key="2">Bar</p>';
+    node2.innerHTML = '<p key="2">Bar2</p> <p key="1">Foo2</p>';
 
     var diff = TreeComparator.diff(node1, node2);
+
     expect(diff).toEqual(
       [{
-        mode: 'swap-nodes',
-        toReplace: node1.childNodes[0], // #text: Foo
-        replacement: node1.childNodes[1] // #text: Bar
+        mode: TreeComparator.PATCH_SWAP_NODES,
+        toReplace: node1.childNodes[0], // <p key="1">Foo</p>
+        replacement: node1.childNodes[2] // <p key="2">Bar</p>
       },
       {
-        toReplace: node1.childNodes[1].childNodes[0], // #text: Bar
+        mode: TreeComparator.PATCH_SET_NODE_VALUE,
+        toReplace: node1.childNodes[2].childNodes[0], // #text: Bar
         replacement: node2.childNodes[0].childNodes[0] // #text: Bar2
       },
       {
+        mode: TreeComparator.PATCH_SET_NODE_VALUE,
         toReplace: node1.childNodes[0].childNodes[0], // #text: Foo
-        replacement: node2.childNodes[1].childNodes[0] // #text: Foo2
+        replacement: node2.childNodes[2].childNodes[0] // #text: Foo2
       }]);
 
     TreeComparator.applyPatches(diff);
-    expect(node1.innerHTML).toBe('<p key="2">Bar2</p><p key="1">Foo2</p>');
+    expect(node1.innerHTML).toBe('<p key="2">Bar2</p> <p key="1">Foo2</p>');
+
+  });
+  
+  it('it should do basic optimized removal if keys are used', () => {
+    var node1 = document.createElement('div');
+    var node2 = document.createElement('div');
+    node1.innerHTML = '<p key="1">Foo</p> <p key="2">Bar</p> <p key="3">Mee</p>';
+    node2.innerHTML = '<p key="2">Bar</p> <p key="3">Mee</p>';
+
+    var diff = TreeComparator.diff(node1, node2);
+
+    expect(diff).toEqual(
+      [{
+        mode: TreeComparator.PATCH_REMOVE_NODE,
+        toReplace: node1.childNodes[0], // <p key="1">Foo</p>
+      },
+      {
+        mode: TreeComparator.PATCH_REMOVE_NODE,
+        toReplace: node1.childNodes[1], // #text: <space>
+      }
+      ]);
+
+    TreeComparator.applyPatches(diff);
+    expect(node1.innerHTML).toBe('<p key="2">Bar</p> <p key="3">Mee</p>');
 
   });
   
@@ -131,31 +161,31 @@ describe('TreeComparator', () => {
     var diff = TreeComparator.diff(node1, node2);
     expect(diff).toEqual(
       [{
-        mode: 'insert-node',
+        mode: TreeComparator.PATCH_INSERT_NODE,
         toReplace: node1,
         replacement: node2.childNodes[0], // <p>Pn</p>
         beforePos: 0
       },
       {
-        mode: 'remove-node',
+        mode: TreeComparator.PATCH_REMOVE_NODE,
         toReplace: node1.childNodes[0] // <p key="1">1</p>
       },
       {
-        mode: 'insert-node',
+        mode: TreeComparator.PATCH_INSERT_NODE,
         toReplace: node1,
         replacement: node2.childNodes[1], // <p key="2">2</p>
         beforePos: 1
       },
       {
-        mode: 'remove-node',
+        mode: TreeComparator.PATCH_REMOVE_NODE,
         toReplace: node1.childNodes[1] // <p>Px</p>
       },
       {
-        mode: 'remove-node',
+        mode: TreeComparator.PATCH_REMOVE_NODE,
         toReplace: node1.childNodes[2] // <p>Py</p>
       },
       {
-        mode: 'append-child',
+        mode: TreeComparator.PATCH_APPEND_CHILD,
         toReplace: node1,
         replacement: node2.childNodes[3] // <p>Pxbis</p>
       }
@@ -177,31 +207,32 @@ describe('TreeComparator', () => {
     
     expect(diff).toEqual(
       [{
-        mode: 'insert-node',
+        mode: TreeComparator.PATCH_INSERT_NODE,
         toReplace: node1,
         replacement: node2.childNodes[0], // <p>Pn</p>
         beforePos: 0
       },
       {
-        mode: 'remove-node',
+        mode: TreeComparator.PATCH_REMOVE_NODE,
         toReplace: node1.childNodes[0] // <p key="1">1</p>
       },
       {
-        mode: 'insert-node',
+        mode: TreeComparator.PATCH_INSERT_NODE,
         toReplace: node1,
         replacement: node2.childNodes[1], // <p key="x">Px</p>
         beforePos: 1
       },
       {
-        mode: 'swap-nodes',
+        mode: TreeComparator.PATCH_SWAP_NODES,
         toReplace: node1.childNodes[1], // <p key="x">Px</p>
         replacement: node1.childNodes[3] //<p key="3">3</p>
       },
       {
-        mode: 'remove-node',
+        mode: TreeComparator.PATCH_REMOVE_NODE,
         toReplace: node1.childNodes[2] //<p key="y">Py</p>
       },
       {
+        mode: TreeComparator.PATCH_SET_NODE_VALUE,
         toReplace: node1.childNodes[1].childNodes[0], // #text: Px
         replacement: node2.childNodes[3].childNodes[0] // #text: Pxbis
       },

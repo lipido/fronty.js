@@ -25,7 +25,7 @@ module.exports = function(grunt) {
     },
     watch: {
       files: ['src/**/*.js', 'test/**/*.js'],
-      tasks: ['jshint', 'test']
+      tasks: ['jshint', 'test', 'jsdoc']
     }
   });
 
