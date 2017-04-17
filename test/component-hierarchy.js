@@ -13,8 +13,8 @@ describe('Component', () => {
   });
 
   it('should render child components', () => {
-    var parent = new Component( () => '<div id="componentId"><p id="childId"></p></div>', 'componentId');
-    var child = new Component( () => '<div id="childId">child!</div>', 'childId');
+    var parent = new Fronty.Component( () => '<div id="componentId"><p id="childId"></p></div>', 'componentId');
+    var child = new Fronty.Component( () => '<div id="childId">child!</div>', 'childId');
     
     parent.addChildComponent(child);
     
@@ -24,10 +24,10 @@ describe('Component', () => {
   });
   
   it('should allow child components of TR, TD, TH type', () => {
-    var parent = new Component( () => '<div id="componentId"><table><tr id="childId"></tr><tr><th id="childId2"></th></tr><tr><td id="childId3"></td></tr></table></div>', 'componentId');
-    var child2 = new Component( () => '<tr id="childId"><td>Hello!</td></tr>', 'childId');
-    var child = new Component( () => '<td id="childId2">Hello2!</td>', 'childId2');    
-    var child3 = new Component( () => '<td id="childId3"></td>', 'childId3');
+    var parent = new Fronty.Component( () => '<div id="componentId"><table><tr id="childId"></tr><tr><th id="childId2"></th></tr><tr><td id="childId3"></td></tr></table></div>', 'componentId');
+    var child2 = new Fronty.Component( () => '<tr id="childId"><td>Hello!</td></tr>', 'childId');
+    var child = new Fronty.Component( () => '<td id="childId2">Hello2!</td>', 'childId2');    
+    var child3 = new Fronty.Component( () => '<td id="childId3"></td>', 'childId3');
     
     
     parent.addChildComponent(child);
@@ -45,7 +45,7 @@ describe('Component', () => {
     var realRenderer = () => '<div><p id="greetings">foo</p></div>';
     var renderer = () => realRenderer();
     
-    var component = new Component( renderer, 'componentId');
+    var component = new Fronty.Component( renderer, 'componentId');
 
     component.start();
     realRenderer = () => '<div><p id="greetings">bar</p></div>';
@@ -57,8 +57,8 @@ describe('Component', () => {
   });
   
   it('should render child components without adding id in the template', () => {
-    var parent = new Component(() => '<div id="componentId"><p id="childId"></p></div>', 'componentId');
-    var child = new Component(() => '<div>child!</div>','childId');
+    var parent = new Fronty.Component(() => '<div id="componentId"><p id="childId"></p></div>', 'componentId');
+    var child = new Fronty.Component(() => '<div>child!</div>','childId');
     
     parent.addChildComponent(child);
     
@@ -72,8 +72,8 @@ describe('Component', () => {
     var realRenderer = () => '<div id="componentId"><p id="modelvalue">foo</p><div id="childId"></div></div>';
     var renderer = () => realRenderer();
     
-    var parent = new Component(renderer, 'componentId');
-    var child = new Component(() => '<div id="childId">child!</div>', 'childId');
+    var parent = new Fronty.Component(renderer, 'componentId');
+    var child = new Fronty.Component(() => '<div id="childId">child!</div>', 'childId');
     
     parent.addChildComponent(child);
     
@@ -97,8 +97,8 @@ describe('Component', () => {
     var realRenderer = () => '<div id="componentId"><p id="modelvalue">foo</p><div id="childId"></div></div>';
     var renderer = () => realRenderer();
     
-    var parent = new Component(renderer, 'componentId');
-    var child = new Component(() => '<div id="childId">child!</div>', 'childId');
+    var parent = new Fronty.Component(renderer, 'componentId');
+    var child = new Fronty.Component(() => '<div id="childId">child!</div>', 'childId');
     
     parent.addChildComponent(child);
     
@@ -119,9 +119,9 @@ describe('Component', () => {
     var realRenderer = () => '<div id="componentId"><div id="childId1"></div><div id="childId2"></div></div>';
     var renderer = () => realRenderer();
     
-    var parent = new Component(renderer, 'componentId');
-    var child = new Component(() => '<div id="childId">child!</div>', 'childId1');
-    var child2 = new Component(() => '<div id="childId2">child 2!</div>', 'childId2');
+    var parent = new Fronty.Component(renderer, 'componentId');
+    var child = new Fronty.Component(() => '<div id="childId">child!</div>', 'childId1');
+    var child2 = new Fronty.Component(() => '<div id="childId2">child 2!</div>', 'childId2');
     
     parent.addChildComponent(child);
     parent.addChildComponent(child2);

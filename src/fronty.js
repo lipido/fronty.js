@@ -1314,7 +1314,7 @@ class Model {
    */
   addObserver(observer) {
     this.observers.push(observer);
-    console.log('Model [' + this.name + ']: added observer, total: ' + this.observers.length);
+    //console.log('Model [' + this.name + ']: added observer, total: ' + this.observers.length);
   }
 
   /**
@@ -1327,7 +1327,7 @@ class Model {
   removeObserver(observer) {
     if (this.observers.indexOf(observer) != -1) {
       this.observers.splice(this.observers.indexOf(observer), 1);
-      console.log('Model [' + this.name + ']: removed observer, total: ' + this.observers.length);
+      //console.log('Model [' + this.name + ']: removed observer, total: ' + this.observers.length);
     }
   }
 }
@@ -1425,7 +1425,7 @@ class ModelComponent extends Component {
    * @param {Model} model The model that has been updated.
    */
   update(model) {
-    console.log('Component [#' + this.htmlNodeId + ']: received update from Model [' + model.name + ']');
+    //console.log('Component [#' + this.htmlNodeId + ']: received update from Model [' + model.name + ']');
     this.render();
   }
 
@@ -1590,7 +1590,7 @@ class RouterComponent extends ModelComponent {
     this.pageHtmlId = routeContentsHtmlId;
 
     window.addEventListener('hashchange', () => {
-      console.log("Router: page changed");
+      //console.log("Router: page changed");
       this._routerModel.set(() => {
         this._routerModel.currentPage = this._calculateCurrentPage();
       });
@@ -1724,10 +1724,18 @@ class RouterComponent extends ModelComponent {
         this.routes[currentPage].component.start();
 
       } else {
-        console.log('Router undefined page ' + currentPage);
+        //console.log('Router undefined page ' + currentPage);
       }
     } else {
-      console.log('Router: no default page defined');
+      //console.log('Router: no default page defined');
     }
   }
 }
+
+export {
+    Model,
+    ModelComponent,
+    Component,
+    RouterComponent,
+    TreeComparator
+};

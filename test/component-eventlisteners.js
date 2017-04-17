@@ -13,7 +13,7 @@ describe('Component', () => {
   });
 
   it('should be add simple click listeners', () => {
-    var component = new Component(() => '<div><button id="greetings">Click Me</button></div>', 'componentId');
+    var component = new Fronty.Component(() => '<div><button id="greetings">Click Me</button></div>', 'componentId');
 
     var clicked = false;
     component.addEventListener('click', '#greetings', () => {
@@ -27,8 +27,8 @@ describe('Component', () => {
   });
   
   it('should be add simple click listeners on children', () => {
-    var component = new Component( () => '<div><div id="child"></div></div>', 'componentId');
-    var child = new Component(() => '<div><button id="greetings">Click Me</button></div>', 'child');
+    var component = new Fronty.Component( () => '<div><div id="child"></div></div>', 'componentId');
+    var child = new Fronty.Component(() => '<div><button id="greetings">Click Me</button></div>', 'child');
     component.addChildComponent(child);
 
     var clicked = false;

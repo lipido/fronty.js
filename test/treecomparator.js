@@ -1,4 +1,4 @@
-describe('TreeComparator', () => {
+describe('Fronty.TreeComparator', () => {
 
   it('it should do basic compararisons', () => {
     var node1 = document.createElement('div');
@@ -6,16 +6,16 @@ describe('TreeComparator', () => {
     node1.innerHTML = '<p>Foo</p>';
     node2.innerHTML = '<p>Bar</p>';
 
-    var diff = TreeComparator.diff(node1, node2);
+    var diff = Fronty.TreeComparator.diff(node1, node2);
 
     expect(diff).toEqual(
       [{
-        mode: TreeComparator.PATCH_SET_NODE_VALUE,
+        mode: Fronty.TreeComparator.PATCH_SET_NODE_VALUE,
         toReplace: node1.childNodes[0].childNodes[0], //#text: Foo
         replacement: node2.childNodes[0].childNodes[0] //#text: Bar
       }]);
 
-    TreeComparator.applyPatches(diff);
+    Fronty.TreeComparator.applyPatches(diff);
     expect(node1.innerHTML).toBe('<p>Bar</p>');
 
   });
@@ -26,16 +26,16 @@ describe('TreeComparator', () => {
     node1.innerHTML = '<p>Foo</p>';
     node2.innerHTML = '<p>Foo</p><p>Bar</p>';
 
-    var diff = TreeComparator.diff(node1, node2);
+    var diff = Fronty.TreeComparator.diff(node1, node2);
 
     expect(diff).toEqual(
       [{
-        mode: TreeComparator.PATCH_APPEND_CHILD,
+        mode: Fronty.TreeComparator.PATCH_APPEND_CHILD,
         toReplace: node1,
         replacement: node2.childNodes[1] // <p>Bar</p>
       }]);
 
-    TreeComparator.applyPatches(diff);
+    Fronty.TreeComparator.applyPatches(diff);
     expect(node1.innerHTML).toBe('<p>Foo</p><p>Bar</p>');
   });
   
@@ -45,16 +45,16 @@ describe('TreeComparator', () => {
     node1.innerHTML = '';
     node2.innerHTML = '<p>Foo</p>';
 
-    var diff = TreeComparator.diff(node1, node2);
+    var diff = Fronty.TreeComparator.diff(node1, node2);
 
     expect(diff).toEqual(
       [{
-        mode: TreeComparator.PATCH_APPEND_CHILD,
+        mode: Fronty.TreeComparator.PATCH_APPEND_CHILD,
         toReplace: node1,
         replacement: node2.childNodes[0] // <p>Bar</p>
       }]);
 
-    TreeComparator.applyPatches(diff);
+    Fronty.TreeComparator.applyPatches(diff);
     expect(node1.innerHTML).toBe('<p>Foo</p>');
   });
 
@@ -64,11 +64,11 @@ describe('TreeComparator', () => {
     node1.innerHTML = '<p>Foo</p>';
     node2.innerHTML = '';
 
-    var diff = TreeComparator.diff(node1, node2);
+    var diff = Fronty.TreeComparator.diff(node1, node2);
 
     expect(diff).toEqual(
       [{
-        mode: TreeComparator.PATCH_REMOVE_NODE,
+        mode: Fronty.TreeComparator.PATCH_REMOVE_NODE,
         toReplace: node1.childNodes[0], // <p>Foo</p>
       }]);
   });
@@ -79,21 +79,21 @@ describe('TreeComparator', () => {
     node1.innerHTML = '<p>Foo</p><p>Bar</p>';
     node2.innerHTML = '<p>Bar</p><p>Foo</p>';
 
-    var diff = TreeComparator.diff(node1, node2);
+    var diff = Fronty.TreeComparator.diff(node1, node2);
     expect(diff).toEqual(
       [{
-          mode: TreeComparator.PATCH_SET_NODE_VALUE,
+          mode: Fronty.TreeComparator.PATCH_SET_NODE_VALUE,
           toReplace: node1.childNodes[0].childNodes[0], // #text: Foo
           replacement: node2.childNodes[0].childNodes[0] // #text: Bar
         },
         {
-          mode: TreeComparator.PATCH_SET_NODE_VALUE,
+          mode: Fronty.TreeComparator.PATCH_SET_NODE_VALUE,
           toReplace: node1.childNodes[1].childNodes[0], // #text: Bar
           replacement: node2.childNodes[1].childNodes[0] // #text: Foo
         }
       ]);
 
-    TreeComparator.applyPatches(diff);
+    Fronty.TreeComparator.applyPatches(diff);
     expect(node1.innerHTML).toBe('<p>Bar</p><p>Foo</p>');
 
   });
@@ -104,26 +104,26 @@ describe('TreeComparator', () => {
     node1.innerHTML = '<p key="1">Foo</p> <p key="2">Bar</p>';
     node2.innerHTML = '<p key="2">Bar2</p> <p key="1">Foo2</p>';
 
-    var diff = TreeComparator.diff(node1, node2);
+    var diff = Fronty.TreeComparator.diff(node1, node2);
 
     expect(diff).toEqual(
       [{
-        mode: TreeComparator.PATCH_SWAP_NODES,
+        mode: Fronty.TreeComparator.PATCH_SWAP_NODES,
         toReplace: node1.childNodes[0], // <p key="1">Foo</p>
         replacement: node1.childNodes[2] // <p key="2">Bar</p>
       },
       {
-        mode: TreeComparator.PATCH_SET_NODE_VALUE,
+        mode: Fronty.TreeComparator.PATCH_SET_NODE_VALUE,
         toReplace: node1.childNodes[2].childNodes[0], // #text: Bar
         replacement: node2.childNodes[0].childNodes[0] // #text: Bar2
       },
       {
-        mode: TreeComparator.PATCH_SET_NODE_VALUE,
+        mode: Fronty.TreeComparator.PATCH_SET_NODE_VALUE,
         toReplace: node1.childNodes[0].childNodes[0], // #text: Foo
         replacement: node2.childNodes[2].childNodes[0] // #text: Foo2
       }]);
 
-    TreeComparator.applyPatches(diff);
+    Fronty.TreeComparator.applyPatches(diff);
     expect(node1.innerHTML).toBe('<p key="2">Bar2</p> <p key="1">Foo2</p>');
 
   });
@@ -134,20 +134,20 @@ describe('TreeComparator', () => {
     node1.innerHTML = '<p key="1">Foo</p> <p key="2">Bar</p> <p key="3">Mee</p>';
     node2.innerHTML = '<p key="2">Bar</p> <p key="3">Mee</p>';
 
-    var diff = TreeComparator.diff(node1, node2);
+    var diff = Fronty.TreeComparator.diff(node1, node2);
 
     expect(diff).toEqual(
       [{
-        mode: TreeComparator.PATCH_REMOVE_NODE,
+        mode: Fronty.TreeComparator.PATCH_REMOVE_NODE,
         toReplace: node1.childNodes[0], // <p key="1">Foo</p>
       },
       {
-        mode: TreeComparator.PATCH_REMOVE_NODE,
+        mode: Fronty.TreeComparator.PATCH_REMOVE_NODE,
         toReplace: node1.childNodes[1], // #text: <space>
       }
       ]);
 
-    TreeComparator.applyPatches(diff);
+    Fronty.TreeComparator.applyPatches(diff);
     expect(node1.innerHTML).toBe('<p key="2">Bar</p> <p key="3">Mee</p>');
 
   });
@@ -158,41 +158,41 @@ describe('TreeComparator', () => {
     node1.innerHTML = '<p key="1">1</p><p>Px</p><p>Py</p><p key="3">3</p>';
     node2.innerHTML = '<p>Pn</p><p key="2">2</p><p key="3">3</p><p>Pxbis</p>';
 
-    var diff = TreeComparator.diff(node1, node2);
+    var diff = Fronty.TreeComparator.diff(node1, node2);
     expect(diff).toEqual(
       [{
-        mode: TreeComparator.PATCH_INSERT_NODE,
+        mode: Fronty.TreeComparator.PATCH_INSERT_NODE,
         toReplace: node1,
         replacement: node2.childNodes[0], // <p>Pn</p>
         beforePos: 0
       },
       {
-        mode: TreeComparator.PATCH_REMOVE_NODE,
+        mode: Fronty.TreeComparator.PATCH_REMOVE_NODE,
         toReplace: node1.childNodes[0] // <p key="1">1</p>
       },
       {
-        mode: TreeComparator.PATCH_INSERT_NODE,
+        mode: Fronty.TreeComparator.PATCH_INSERT_NODE,
         toReplace: node1,
         replacement: node2.childNodes[1], // <p key="2">2</p>
         beforePos: 1
       },
       {
-        mode: TreeComparator.PATCH_REMOVE_NODE,
+        mode: Fronty.TreeComparator.PATCH_REMOVE_NODE,
         toReplace: node1.childNodes[1] // <p>Px</p>
       },
       {
-        mode: TreeComparator.PATCH_REMOVE_NODE,
+        mode: Fronty.TreeComparator.PATCH_REMOVE_NODE,
         toReplace: node1.childNodes[2] // <p>Py</p>
       },
       {
-        mode: TreeComparator.PATCH_APPEND_CHILD,
+        mode: Fronty.TreeComparator.PATCH_APPEND_CHILD,
         toReplace: node1,
         replacement: node2.childNodes[3] // <p>Pxbis</p>
       }
     
       ]);
 
-    TreeComparator.applyPatches(diff);
+    Fronty.TreeComparator.applyPatches(diff);
     expect(node1.innerHTML).toBe('<p>Pn</p><p key="2">2</p><p key="3">3</p><p>Pxbis</p>');
 
   });
@@ -203,42 +203,42 @@ describe('TreeComparator', () => {
     node1.innerHTML = '<p key="1">1</p><p key="x">Px</p><p key="y">Py</p><p key="3">3</p>';
     node2.innerHTML = '<p key="n">Pn</p><p key="2">2</p><p key="3">3</p><p key="x">Pxbis</p>';
     
-    var diff = TreeComparator.diff(node1, node2);
+    var diff = Fronty.TreeComparator.diff(node1, node2);
     
     expect(diff).toEqual(
       [{
-        mode: TreeComparator.PATCH_INSERT_NODE,
+        mode: Fronty.TreeComparator.PATCH_INSERT_NODE,
         toReplace: node1,
         replacement: node2.childNodes[0], // <p>Pn</p>
         beforePos: 0
       },
       {
-        mode: TreeComparator.PATCH_REMOVE_NODE,
+        mode: Fronty.TreeComparator.PATCH_REMOVE_NODE,
         toReplace: node1.childNodes[0] // <p key="1">1</p>
       },
       {
-        mode: TreeComparator.PATCH_INSERT_NODE,
+        mode: Fronty.TreeComparator.PATCH_INSERT_NODE,
         toReplace: node1,
         replacement: node2.childNodes[1], // <p key="x">Px</p>
         beforePos: 1
       },
       {
-        mode: TreeComparator.PATCH_SWAP_NODES,
+        mode: Fronty.TreeComparator.PATCH_SWAP_NODES,
         toReplace: node1.childNodes[1], // <p key="x">Px</p>
         replacement: node1.childNodes[3] //<p key="3">3</p>
       },
       {
-        mode: TreeComparator.PATCH_REMOVE_NODE,
+        mode: Fronty.TreeComparator.PATCH_REMOVE_NODE,
         toReplace: node1.childNodes[2] //<p key="y">Py</p>
       },
       {
-        mode: TreeComparator.PATCH_SET_NODE_VALUE,
+        mode: Fronty.TreeComparator.PATCH_SET_NODE_VALUE,
         toReplace: node1.childNodes[1].childNodes[0], // #text: Px
         replacement: node2.childNodes[3].childNodes[0] // #text: Pxbis
       },
       ]);
 
-    TreeComparator.applyPatches(diff);
+    Fronty.TreeComparator.applyPatches(diff);
     expect(node1.innerHTML).toBe('<p key="n">Pn</p><p key="2">2</p><p key="3">3</p><p key="x">Pxbis</p>');
 
   });

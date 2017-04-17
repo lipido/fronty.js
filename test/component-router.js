@@ -27,9 +27,9 @@ describe('RouterComponent', () => {
   });
 
   it('should render a default route', () => {
-    var router = new RouterComponent('router', () => '<div id="router"><div id="currentpage"></div></div>', 'currentpage', []);
+    var router = new Fronty.RouterComponent('router', () => '<div id="router"><div id="currentpage"></div></div>', 'currentpage', []);
     
-    var page = new ModelComponent(()=>'<div id="currentpage">Page1</div>', null, null);
+    var page = new Fronty.ModelComponent(()=>'<div id="currentpage">Page1</div>', null, null);
     
     router.setRouterConfig({
       page: {
@@ -46,10 +46,10 @@ describe('RouterComponent', () => {
   it('should change the route', () => {
 
     
-    var router = new RouterComponent('router', () => '<div id="router"><div id="currentpage"></div></div>', 'currentpage', []);
+    var router = new Fronty.RouterComponent('router', () => '<div id="router"><div id="currentpage"></div></div>', 'currentpage', []);
     
-    var page = new ModelComponent(() => '<div>Page1</div>', null, null);
-    var page2 = new ModelComponent(() => '<div>Page2</div>', null, null);
+    var page = new Fronty.ModelComponent(() => '<div>Page1</div>', null, null);
+    var page2 = new Fronty.ModelComponent(() => '<div>Page2</div>', null, null);
     
     router.setRouterConfig({
       page: {
@@ -79,10 +79,10 @@ describe('RouterComponent', () => {
   
   it('should give the correct current page', () => {
     
-    var router = new RouterComponent('router', () => '<div id="currentpage"></div>', 'currentpage', []);
+    var router = new Fronty.RouterComponent('router', () => '<div id="currentpage"></div>', 'currentpage', []);
     
-    var page = new ModelComponent(()=>'<div>Page1</div>', null, null);
-    var page2 = new ModelComponent(()=>'<div>Page2</div>', null, null);
+    var page = new Fronty.ModelComponent(()=>'<div>Page1</div>', null, null);
+    var page2 = new Fronty.ModelComponent(()=>'<div>Page2</div>', null, null);
     
     router.setRouterConfig({
       page: {

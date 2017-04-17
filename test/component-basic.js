@@ -18,7 +18,7 @@ describe('Component', () => {
   });
 
   it('should render a static template', () => {//
-    var component = new Component(() => '<table id="componentId"><tr><td>Hello World</td></tr></table>', 'componentId');
+    var component = new Fronty.Component(() => '<table id="componentId"><tr><td>Hello World</td></tr></table>', 'componentId');
 
     component.start();
 
@@ -27,7 +27,7 @@ describe('Component', () => {
   });
   
   it('should render a static template via direct-DOM rendering', () => {//
-    var component = new Component(() => {
+    var component = new Fronty.Component(() => {
       var table = document.createElement('table');
       table.id = 'componentId';
       table.appendChild(document.createElement('tr'));
@@ -43,7 +43,7 @@ describe('Component', () => {
 
   });
   it('should render a static comment', () => {
-    var component = new Component(() => '<p id="componentId"><!-- Hello World --></p>', 'componentId');
+    var component = new Fronty.Component(() => '<p id="componentId"><!-- Hello World --></p>', 'componentId');
 
     component.start();
 
@@ -53,7 +53,7 @@ describe('Component', () => {
     
   it('should render on dirty content', () => {
     document.getElementById('componentId').innerHTML = '<p>dirty<!-- fronty-text-node: 1--></p>';
-    var component = new Component(() => '<div><p>Hello World</p></div>', 'componentId');
+    var component = new Fronty.Component(() => '<div><p>Hello World</p></div>', 'componentId');
 
     component.start();
 
@@ -69,7 +69,7 @@ describe('Component', () => {
   });
   
   it('should trim templates', () => {
-    var component = new Component(() => ' <p>Hello World</p> ', 'componentId');
+    var component = new Fronty.Component(() => ' <p>Hello World</p> ', 'componentId');
 
     component.start();
 
@@ -81,7 +81,7 @@ describe('Component', () => {
     
     var realRenderer = () => '<div><p id="greetings">foo</p></div>';
     var renderer = () => realRenderer();
-    var component = new Component(renderer, 'componentId');
+    var component = new Fronty.Component(renderer, 'componentId');
     
     component.start();
     
@@ -96,7 +96,7 @@ describe('Component', () => {
     
     var realRenderer = () => '<div><p id="greetings"><!-- foo --></p></div>';
     var renderer = () => realRenderer();
-    var component = new Component(renderer, 'componentId');
+    var component = new Fronty.Component(renderer, 'componentId');
     
     component.start();
 
@@ -113,7 +113,7 @@ describe('Component', () => {
     var realRenderer = () => '<div id="componentId">hi!</div>';
     var renderer = () => realRenderer();
     
-    var component = new Component(renderer, 'componentId');
+    var component = new Fronty.Component(renderer, 'componentId');
 
     component.start();
     
@@ -130,7 +130,7 @@ describe('Component', () => {
     var realRenderer = () => '<div id="componentId">Foo</div>';
     var renderer = () => realRenderer();
     
-    var component = new Component(renderer, 'componentId');
+    var component = new Fronty.Component(renderer, 'componentId');
 
     component.start();
 
@@ -161,7 +161,7 @@ describe('Component', () => {
     '</div>';
     var renderer = () => realRenderer();
     
-    var component = new Component(renderer, 'componentId');
+    var component = new Fronty.Component(renderer, 'componentId');
 
     component.start();
 
@@ -187,7 +187,7 @@ describe('Component', () => {
     '</div>';
     var renderer = () => realRenderer();
     
-    var component = new Component(renderer, 'componentId');
+    var component = new Fronty.Component(renderer, 'componentId');
 
     component.start();
 
@@ -223,7 +223,7 @@ describe('Component', () => {
     '</div>';
     var renderer = () => realRenderer();
     
-    var component = new Component(renderer, 'componentId');
+    var component = new Fronty.Component(renderer, 'componentId');
 
     component.start();
     
@@ -256,7 +256,7 @@ describe('Component', () => {
     '</div>';
     var renderer = () => realRenderer();
     
-    var component = new Component(renderer, 'componentId');
+    var component = new Fronty.Component(renderer, 'componentId');
 
     component.start();
 
@@ -288,7 +288,7 @@ describe('Component', () => {
     '</div>';
     var renderer = () => realRenderer();
     
-    var component = new Component(renderer, 'componentId');
+    var component = new Fronty.Component(renderer, 'componentId');
 
     component.start();
     var item4Node = document.getElementsByClassName('item')[2]; //item-4
@@ -315,7 +315,7 @@ describe('Component', () => {
     '</div>';
     var renderer = () => realRenderer();
     
-    var component = new Component(renderer, 'componentId');
+    var component = new Fronty.Component(renderer, 'componentId');
 
     //
     component.start();
@@ -346,7 +346,7 @@ describe('Component', () => {
     '</div>';
     var renderer = () => realRenderer();
     
-    var component = new Component(renderer, 'componentId');
+    var component = new Fronty.Component(renderer, 'componentId');
 
     component.start();
     var item4Node = document.getElementsByClassName('item')[2]; //item-4
@@ -373,7 +373,7 @@ describe('Component', () => {
       return realRenderer();
     };
     
-    var component = new Component(renderer, 'componentId');
+    var component = new Fronty.Component(renderer, 'componentId');
     
     component.start();
     expect(stripComments(document.getElementById('componentId').innerHTML)).toBe('<li key="1"></li><p>Hello</p><li key="3"></li>');  

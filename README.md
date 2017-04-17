@@ -22,7 +22,7 @@ In order to make changes in a model, you have to use the `set` method, which
 will notify all observers that a change has been made.
 
 ```javascript
-var myModel = new Model('mymodel');
+var myModel = new Fronty.Model('mymodel');
 myModel.counter = 0;
 
 // update the model later
@@ -68,12 +68,12 @@ Handlebars template). The component *observes* the model. If any change is made
 in the model, the component will re-render.
 
 ```javascript
-var myModel = new Model('mymodel');
+var myModel = new Fronty.Model('mymodel');
 myModel.counter = 0;
 var aTemplate = Handlebars.compile(
   '<div><span>Current counter: {{counter}}</span><button id="increase">Increase</button></div>'
 );
-var myComponent = new ModelComponent(aTemplate, myModel, 'myapp');
+var myComponent = new Fronty.ModelComponent(aTemplate, myModel, 'myapp');
 ```
 
 In the example, the component will be placed inside the element with
@@ -116,7 +116,7 @@ Here you have a single page with a minimal code to see fronty.js working.
       $( ()=> { //wait for document ready
 
         // Model
-        var myModel = new Model('mymodel');
+        var myModel = new Fronty.Model('mymodel');
         myModel.counter = 0;
         
         // Template
@@ -125,7 +125,7 @@ Here you have a single page with a minimal code to see fronty.js working.
         );
         
         // Component
-        var myComponent = new ModelComponent(aTemplate, myModel, 'myapp');
+        var myComponent = new Fronty.ModelComponent(aTemplate, myModel, 'myapp');
         myComponent.addEventListener('click', '#increase', () => {
           //update the model
           myModel.set( () => myModel.counter++ );
@@ -172,10 +172,10 @@ Promise.all([
   .then(() => { 
     $(() => {
       // once templates are loaded and the document is ready, it is safe to start
-      var myModel = new Model('mymodel');
+      var myModel = new Fronty.Model('mymodel');
       myModel.counter = 0;
       
-      var myComponent = new ModelComponent(Handlebars.templates.counter, myModel, 'myapp');
+      var myComponent = new Fronty.ModelComponent(Handlebars.templates.counter, myModel, 'myapp');
       myComponent.addEventListener('click', '#increase', () => {
         //update the model
         myModel.set( () => myModel.counter++ );
@@ -202,7 +202,7 @@ Components by extending these classes.
 For example:
 
 ```javascript
-class Counter extends Model {
+class Counter extends Fronty.Model {
   constructor() {
     super('counter');
     this.counter = 0;
@@ -213,7 +213,7 @@ class Counter extends Model {
   }
 }
 
-class CounterComponent extends ModelComponent {
+class CounterComponent extends Fronty.ModelComponent {
   constructor(counterModel, node) {
     super(Handlebars.templates.counter, counterModel, node);
     this.counterModel = counterModel;
@@ -229,14 +229,14 @@ class CounterComponent extends ModelComponent {
 ## Nesting Components
 Components can also be composed one inside other for better modularity,
 reusability and performance by using
-`component.addChildComponent(childComponent)`. You can also place a special tag
+`component.addChildComponent(childComponent)`. You can also place a special attribute
 in parent components to create child components dynamically. For example:
 
 ```html
 <!-- parent template -->
 <ul>
   {{#each items}}
-  <todoitemcomponent id="item-{{id}}" key="item-{{id}}" model="items[{{@index}}]"></todoitemcomponent>
+  <li fronty-component="TodoItemComponent" id="item-{{id}}" key="item-{{id}}" model="items[{{@index}}]"></li>
   {{/each}}
 </ul>
 ```
@@ -251,39 +251,39 @@ in parent components to create child components dynamically. For example:
 ```javascript
 
 // parent component
-class TodoListComponent extends ModelComponent {
+class TodoListComponent extends Fronty.ModelComponent {
   constructor(id, items) {
     super(
       Handlebars.compile(document.getElementById('todo-list-template').innerHTML),
-      items, id, 
-      ['TodoItemComponent']); // <--- tags that create child components
+      items, id);
   
   }
 }
 
 // child items component
-class TodoItemComponent extends ModelComponent {
+class TodoItemComponent extends Fronty.ModelComponent {
   constructor(id, item) { // <--- a component class with this constructor must be available
   }
 }
 ```
 
-In the parent component, you have to indicate that the `<todoitemcomponent>` tag
-is a tag that should create child components dynamically, and pass them the
-model that the expression found in the attribute `model` evaluates to. Once the 
-child component are created, these tags are replaced.
+In the parent component, you have to indicate the `fronty-component` attribute
+to create child components dynamically, and pass the
+model that the expression found in the attribute `model` evaluates to.
 
 If you want to instantiate the child components by hand, you can override the
 `createChildComponent(childTag, modelItem, itemId)` function in the parent
 component. For example:
+
+**Note:** If you use a module system for JavaScript, Fronty will not be able to locate your class,
+so it is mandatory to override the method like in this example.
 
 ```javascript
 class TodoListComponent extends Component {
   constructor(id, items) {
     super(
       Handlebars.compile(document.getElementById('todo-list-template').innerHTML),
-      items, id, 
-      ['TodoItemComponent']); // <--- tags that create child components
+      items, id);
   
   }
   createModelChildModelComponent(childTag, childTagElement, itemId, modelItem) {

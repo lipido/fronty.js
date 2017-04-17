@@ -26,18 +26,54 @@ module.exports = function(grunt) {
     watch: {
       files: ['src/**/*.js', 'test/**/*.js'],
       tasks: ['jshint', 'test', 'jsdoc']
+    },
+    babel: {
+      options: {
+        sourceMap: true,
+        presets: ['es2015']
+      },
+      dist: {
+        files: {
+          'dist/fronty.js': 'src/fronty.js'
+        }
+      }
+    },
+
+    webpack: {
+      fronty: {
+        // webpack options 
+        entry: "./dist/fronty.js",
+        output: {
+          path: __dirname + '/dist',
+          filename: "fronty.js",
+          library: 'Fronty',
+          libraryTarget: 'umd'
+        }
+      }
+    },
+
+    uglify: {
+      my_target: {
+        files: {
+          'dist/fronty.min.js': ['dist/fronty.js']
+        }
+      }
     }
+
   });
 
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-jsdoc');
   grunt.loadNpmTasks('grunt-karma');
+  grunt.loadNpmTasks('grunt-babel');
+  grunt.loadNpmTasks('grunt-contrib-uglify');
+  grunt.loadNpmTasks('grunt-webpack');
 
-  
+
   grunt.registerTask('test', ['karma']);
   grunt.registerTask('dev', ['watch']);
-  
+
   // Default task(s).
-  grunt.registerTask('default', ['jshint', 'test', 'jsdoc']);
+  grunt.registerTask('default', ['jshint', 'babel', 'webpack', 'test', 'jsdoc', 'uglify']);
 };

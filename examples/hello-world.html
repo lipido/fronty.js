@@ -4,11 +4,11 @@
     <meta charset="utf-8">
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.6/handlebars.min.js"></script>
-    <script src="../src/fronty.js"></script>
+    <script src="../dist/fronty.js"></script>
     
     <script>
       $( ()=> { //wait for document ready
-        class Counter extends Model {
+        class Counter extends Fronty.Model {
           constructor() {
             super('counter');
             this.counter = 0;
@@ -19,7 +19,7 @@
           }
         }
 
-        class CounterComponent extends ModelComponent {
+        class CounterComponent extends Fronty.ModelComponent {
           constructor(counterModel, node) {
             super(Handlebars.templates.counter, counterModel, node);
             this.counterModel = counterModel;

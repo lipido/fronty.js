@@ -1,4 +1,4 @@
-class ChildModelComponent extends ModelComponent {
+class ChildModelComponent extends Fronty.ModelComponent {
   constructor(id, model) {
     super(() => '<div id="' + id + '">' + model.value + '</div>', model, id);
   }
@@ -23,10 +23,10 @@ describe('ModelComponent', () => {
   });
 
   it('should render a single model value', () => {
-    var model = new Model();
+    var model = new Fronty.Model();
     model.value = 'foo';
 
-    var component = new ModelComponent((m) => '<p>' + m.value + '</p>', model, 'componentId');
+    var component = new Fronty.ModelComponent((m) => '<p>' + m.value + '</p>', model, 'componentId');
 
     component.start();
 
@@ -35,10 +35,10 @@ describe('ModelComponent', () => {
   });
 
   it('should remove/add the observer after component restarts', () => {
-    var model = new Model();
+    var model = new Fronty.Model();
     model.value = 'foo';
 
-    var component = new ModelComponent((m) => '<p>' + m.value + '</p>', model, 'componentId');
+    var component = new Fronty.ModelComponent((m) => '<p>' + m.value + '</p>', model, 'componentId');
 
     component.start();
 
@@ -51,10 +51,10 @@ describe('ModelComponent', () => {
   });
 
   it('should remove nodes after update', () => {
-    var model = new Model();
+    var model = new Fronty.Model();
     model.value = 'true';
 
-    var component = new ModelComponent((m) => '<div id="componentId">' + (m.value ? 'hi!' : '') + '</div>', model, 'componentId');
+    var component = new Fronty.ModelComponent((m) => '<div id="componentId">' + (m.value ? 'hi!' : '') + '</div>', model, 'componentId');
 
     component.start();
 
@@ -76,7 +76,7 @@ describe('ModelComponent', () => {
       return res;
     };
 
-    var model = new Model();
+    var model = new Fronty.Model();
     model.items = [{
       item: 'item-1'
     }, {
@@ -85,7 +85,7 @@ describe('ModelComponent', () => {
       item: 'item-4'
     }];
 
-    var component = new ModelComponent(renderer, model, 'componentId');
+    var component = new Fronty.ModelComponent(renderer, model, 'componentId');
 
     component.start();
 
@@ -119,11 +119,11 @@ describe('ModelComponent', () => {
       return res;
     };
 
-    var model = new Model();
+    var model = new Fronty.Model();
     model.items = [{
       item: 'foo'
     }];
-    var component = new ModelComponent(renderer, model, 'componentId');
+    var component = new Fronty.ModelComponent(renderer, model, 'componentId');
 
     component.start();
 
@@ -157,13 +157,13 @@ describe('ModelComponent', () => {
       return res;
     };
 
-    var model = new Model();
+    var model = new Fronty.Model();
 
-    var childModel = new Model();
+    var childModel = new Fronty.Model();
     childModel.value = 'foo';
     model.items = [childModel];
 
-    var parent = new ModelComponent(
+    var parent = new Fronty.ModelComponent(
       renderer,
       model,
       'componentId', ['ChildModelComponent'] //tags that generate childs
@@ -171,7 +171,7 @@ describe('ModelComponent', () => {
 
     parent.createChildModelComponent = (tagName, childTagElement, id, modelItem) => {
       if (tagName === 'ChildModelComponent') {
-        return new ModelComponent((m) => '<div id="' + id + '">' + m.value + '</div>', modelItem, id);
+        return new Fronty.ModelComponent((m) => '<div id="' + id + '">' + m.value + '</div>', modelItem, id);
       }
     };
 
@@ -187,7 +187,7 @@ describe('ModelComponent', () => {
 
 
     model.set(() => {
-      var childModel = new Model();
+      var childModel = new Fronty.Model();
       childModel.value = 'foo';
       model.items.push(childModel);
     });
@@ -195,7 +195,7 @@ describe('ModelComponent', () => {
 
     expect(parent.getChildComponents().length).toBe(1);
     model.set(() => {
-      var childModel = new Model();
+      var childModel = new Fronty.Model();
       childModel.value = 'foo';
       model.items.push(childModel);
     });
@@ -216,17 +216,17 @@ describe('ModelComponent', () => {
       return res;
     };
 
-    var model = new Model();
+    var model = new Fronty.Model();
 
-    var childModel = new Model();
+    var childModel = new Fronty.Model();
     childModel.value = 'foo';
-    var childModel2 = new Model();
+    var childModel2 = new Fronty.Model();
     childModel2.value = 'bar';
     model.items = [childModel, childModel2];
 
 
     //ChildComponent class is defined in global scope (see start of this file)
-    var parent = new ModelComponent(
+    var parent = new Fronty.ModelComponent(
       renderer,
       model,
       'componentId', ['ChildModelComponent'] //tags that generate childs

@@ -1,4 +1,4 @@
-class ChildComponent extends Component {
+class ChildComponent extends Fronty.Component {
   constructor(id) {
     super(() => '<div id="'+id+'">'+id+'</div>', id);
   }
@@ -26,14 +26,14 @@ describe('Component', () => {
     var realRenderer = () => '<div id="componentId"><ChildComponent id="child-0"></ChildComponent></div>';
     var renderer = () => realRenderer();
     
-    var parent = new Component(
+    var parent = new Fronty.Component(
       renderer,
       'componentId', ['ChildComponent'] //tags that generate childs
     );
 
     parent.createChildComponent = (tagName, childTagElement, id) => {
       if (tagName === 'ChildComponent') {
-        return new Component(() =>'<div id="'+id+'">foo</div>', id);
+        return new Fronty.Component(() =>'<div id="'+id+'">foo</div>', id);
       }
     };
 
@@ -65,7 +65,7 @@ describe('Component', () => {
     var renderer = () => realRenderer();
 
     //ChildComponent class is defined in global scope (see start of this file)
-    var parent = new Component(
+    var parent = new Fronty.Component(
       renderer,
       'componentId', ['ChildComponent'] //tags that generate childs
     );
@@ -88,7 +88,7 @@ describe('Component', () => {
     var renderer = () => realRenderer();
 
     //ChildComponent class is defined in global scope (see start of this file)
-    var parent = new Component(
+    var parent = new Fronty.Component(
       renderer,
       'componentId' //tags that generate childs
     );
