@@ -279,7 +279,7 @@ component. For example:
 so it is mandatory to override the method like in this example.
 
 ```javascript
-class TodoListComponent extends Component {
+class TodoListComponent extends Fronty.Component {
   constructor(id, items) {
     super(
       Handlebars.compile(document.getElementById('todo-list-template').innerHTML),
@@ -308,3 +308,5 @@ See an example in [here](examples/todo-list.html).
 - Models are mutable and observed by components. Only those ModelComponent
   objects that observe a changing model are re-rendered, so you can control
   which part of the DOM is re-evaluated for changes.
+- What about performance? I have [benchmarked Fronty](https://github.com/lipido/fronty-benchmark/)
+  using a well-known benchmark. Results can be seen [here](http://htmlpreview.github.io/?https://github.com/lipido/fronty-benchmark/blob/master/webdriver-ts/table.html).
