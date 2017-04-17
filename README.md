@@ -14,7 +14,7 @@ This readme and documentation can be also viewed in
 
 ### Models
 Models are [Observable](http://www.oodesign.com/observer-pattern.html) objects,
-that extends the class `Model`. In models you save your application's "logic
+that extend the `Model` class. Models contain your application's "logic
 state" (e.g.: list of todo items, current editing employee, current logged user,
 etc.).
 
