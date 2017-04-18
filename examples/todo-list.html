@@ -6,7 +6,6 @@
 
   <!-- Latest compiled and minified CSS -->
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.6/handlebars.min.js"></script>
   <script src="../dist/fronty.js"></script>
   
@@ -28,8 +27,10 @@
     <li class="{{#if done}}disabled {{/if}}list-group-item" key="item-{{id}}">
       {{description}}
       
-      {{#if done}}<button class="reopenbutton btn btn-default" type="button">reopen</button>
-      {{else}}<button class="donebutton btn btn-default" type="button">done</button>
+      {{#if done}}
+      <button class="reopenbutton btn btn-default" type="button">reopen</button>
+      {{else}}
+      <button class="donebutton btn btn-default" type="button">done</button>
       {{/if}}
       
       <button class="removebutton btn btn-default" type="button">remove</button>
@@ -50,7 +51,6 @@
       }
     }
 
-    
     class TodoItem extends Fronty.Model {
       constructor(description, done, list) {
         super(description);
@@ -76,7 +76,7 @@
         super(Handlebars.compile(document.getElementById('todo-list-template').innerHTML), items, id);
         this.addEventListener('click', '#addbutton', () => {
           items.set(() => {
-            items.addItem(new TodoItem($('#itemname').val(), false, items));
+            items.addItem(new TodoItem(document.getElementById('itemname').value, false, items));
           });
 
         });
@@ -108,18 +108,15 @@
           
         });
       }
-
     }
+    var todos = new TodoList();
 
-    $(() => {
-      var todos = new TodoList();
-
-      new TodoListComponent('todo-list-app', todos).start();
-      todos.set(() => {
-        todos.addItem(new TodoItem('lunch', false, todos));
-        todos.addItem(new TodoItem('dinner', false, todos));
-      });
+    var todoListComponent = new TodoListComponent('todo-list-app', todos);
+    todos.set(() => {
+      todos.addItem(new TodoItem('lunch', false, todos));
+      todos.addItem(new TodoItem('dinner', false, todos));
     });
+    
   </script>
 </head>
 
@@ -128,6 +125,9 @@
 
   <div id="todo-list-app">Loading</div>
 
+  <script>
+    todoListComponent.start();
+  </script>
 </body>
 
 </html>

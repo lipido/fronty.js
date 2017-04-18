@@ -106,34 +106,30 @@ Here you have a single page with a minimal code to see fronty.js working.
 <html>
   <head>
     <meta charset="utf-8">
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.6/handlebars.min.js"></script>
     <script src="js/fronty.js"></script>
   </head>
   <body>
     <div id ="myapp">Loading</div>
     <script>
-      $( ()=> { //wait for document ready
-
-        // Model
-        var myModel = new Fronty.Model('mymodel');
-        myModel.counter = 0;
+      // Model
+      var myModel = new Fronty.Model('mymodel');
+      myModel.counter = 0;
         
-        // Template
-        var aTemplate = Handlebars.compile(
-          '<div><span>Current counter: {{counter}}</span><button id="increase">Increase</button></div>'
-        );
+      // Template
+      var aTemplate = Handlebars.compile(
+        '<div><span>Current counter: {{counter}}</span><button id="increase">Increase</button></div>'
+      );
         
-        // Component
-        var myComponent = new Fronty.ModelComponent(aTemplate, myModel, 'myapp');
-        myComponent.addEventListener('click', '#increase', () => {
-          //update the model
-          myModel.set( () => myModel.counter++ );
-        });
-        
-        // Start rendering
-        myComponent.start();
+      // Component
+      var myComponent = new Fronty.ModelComponent(aTemplate, myModel, 'myapp');
+      myComponent.addEventListener('click', '#increase', () => {
+        //update the model
+        myModel.set( () => myModel.counter++ );
       });
+      
+      // Start rendering
+      myComponent.start();
     </script>
   </body>
 </html>
