@@ -1,6 +1,6 @@
 class ChildModelComponent extends Fronty.ModelComponent {
   constructor(id, model) {
-    super(() => '<div id="' + id + '">' + model.value + '</div>', model, id);
+    super((model) => '<div id="' + id + '">' + model.value + '</div>', model, id);
   }
 }
 
@@ -244,5 +244,160 @@ describe('ModelComponent', () => {
     expect(parent.getChildComponents().length).toBe(0);
   });
 
+  it('should update child component classes on child attribute when model changes', () => {
+    var renderer = (m) => {
+      var res = '<div id="componentId">';
+      for (var index = 0; index < m.items.length; index++) {
+        var item = m.items[index];
+        res += '<div fronty-component="ChildModelComponent" id="child-' + index + '" model="items[' + index + ']"></div>';
+      }
+      res += '</div>';
+      console.log(res);
+      return res;
+    };
+
+    var model = new Fronty.Model();
+
+    var childModel = new Fronty.Model();
+    childModel.value = 'foo';
+    var childModel2 = new Fronty.Model();
+    childModel2.value = 'bar';
+    model.items = [childModel, childModel2];
+
+
+    //ChildComponent class is defined in global scope (see start of this file)
+    var parent = new Fronty.ModelComponent(
+      renderer,
+      model,
+      'componentId'
+    );
+
+    parent.start();
+    expect(document.getElementById('child-0').textContent).toBe('foo');
+    expect(document.getElementById('child-1').textContent).toBe('bar');
+    expect(parent.getChildComponents().length).toBe(2);
+
+    var newChildModel = new Fronty.Model();
+    newChildModel.value = 'foo2';
+    var newChildModel2 = new Fronty.Model();
+    newChildModel2.value = 'bar2';
+    model.set(() => {
+      // we change the references to new child models
+      model.items = [newChildModel, newChildModel2];  
+    });
+    
+    expect(document.getElementById('child-0').textContent).toBe('foo2');
+    expect(document.getElementById('child-1').textContent).toBe('bar2');
+    expect(parent.getChildComponents().length).toBe(2);
+
+    model.set(() => {
+      model.items.length = 0;
+    });
+
+    expect(parent.getChildComponents().length).toBe(0);
+  });
+  
+  it('should update child component classes on child tag when model changes', () => {
+    var renderer = (m) => {
+      var res = '<div id="componentId">';
+      for (var index = 0; index < m.items.length; index++) {
+        var item = m.items[index];
+        res += '<ChildModelComponent id="child-' + index + '" model="items[' + index + ']"></ChildModelComponent>';
+      }
+      res += '</div>';
+      console.log(res);
+      return res;
+    };
+
+    var model = new Fronty.Model();
+
+    var childModel = new Fronty.Model();
+    childModel.value = 'foo';
+    var childModel2 = new Fronty.Model();
+    childModel2.value = 'bar';
+    model.items = [childModel, childModel2];
+
+
+    //ChildComponent class is defined in global scope (see start of this file)
+    var parent = new Fronty.ModelComponent(
+      renderer,
+      model,
+      'componentId', ['ChildModelComponent']
+    );
+
+    parent.start();
+    expect(document.getElementById('child-0').textContent).toBe('foo');
+    expect(document.getElementById('child-1').textContent).toBe('bar');
+    expect(parent.getChildComponents().length).toBe(2);
+
+    var newChildModel = new Fronty.Model();
+    newChildModel.value = 'foo2';
+    var newChildModel2 = new Fronty.Model();
+    newChildModel2.value = 'bar2';
+    model.set(() => {
+      // we change the references to new child models
+      model.items = [newChildModel, newChildModel2];  
+    });
+    
+    expect(document.getElementById('child-0').textContent).toBe('foo2');
+    expect(document.getElementById('child-1').textContent).toBe('bar2');
+    expect(parent.getChildComponents().length).toBe(2);
+
+    model.set(() => {
+      model.items.length = 0;
+    });
+
+    expect(parent.getChildComponents().length).toBe(0);
+  });
+
+  it('should update allow changes on lists of children', () => {
+    var renderer = (m) => {
+      var res = '<div id="componentId">';
+      for (var index = 0; index < m.items.length; index++) {
+        var item = m.items[index];
+        res += '<ChildModelComponent id="child-' + item.id + '" model="items[' + index + ']" key="item-'+ item.id +'"></ChildModelComponent>';//
+      }
+      res += '</div>';
+      console.log(res);
+      return res;
+    };
+
+    var model = new Fronty.Model();
+
+    var childModel = new Fronty.Model();
+    childModel.value = 'foo';
+    childModel.id = 1;
+    var childModel2 = new Fronty.Model();
+    childModel2.value = 'bar';
+    childModel2.id = 2;
+    model.items = [childModel, childModel2];
+
+
+    //ChildComponent class is defined in global scope (see start of this file)
+    var parent = new Fronty.ModelComponent(
+      renderer,
+      model,
+      'componentId', ['ChildModelComponent']
+    );
+
+    parent.start();
+    expect(document.getElementById('child-1').textContent).toBe('foo');
+    expect(document.getElementById('child-2').textContent).toBe('bar');
+    expect(parent.getChildComponents().length).toBe(2);
+
+    model.set(() => {
+      // we change the references to new child models
+      model.items = [childModel2];
+    });
+    
+    expect(document.getElementById('child-2').textContent).toBe('bar');
+    expect(parent.getChildComponents().length).toBe(1);
+
+    model.set(() => {
+      model.items.length = 0;
+    });
+
+    expect(parent.getChildComponents().length).toBe(0);
+  });
 
 });

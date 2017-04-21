@@ -139,4 +139,28 @@ describe('Component', () => {
     expect(document.getElementById('childId2').textContent).toBe('child 2!');
     
   });
+  
+  
+  it('should not touch child nodes or parent re-render', () => {
+    var realRenderer = () => '<div id="componentId"><div id="childId1"></div></div>';
+    var renderer = () => realRenderer();
+    
+    var parent = new Fronty.Component(renderer, 'componentId');
+    var child = new Fronty.Component(() => '<div id="childId">child!</div>', 'childId1');
+    
+    parent.addChildComponent(child);
+    
+    parent.start();
+    
+    expect(document.getElementById('childId1').textContent).toBe('child!');
+    
+    
+    realRenderer = () => '<div id="componentId"><div id="childId1" class="dummy"></div></div>';
+    
+    parent.render();
+    
+    expect(document.getElementById('childId1').textContent).toBe('child!');
+    expect(document.getElementById('childId1').classList.length).toBe(0);
+    
+  });
 });

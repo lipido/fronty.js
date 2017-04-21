@@ -1,6 +1,6 @@
 class ChildComponent extends Fronty.Component {
   constructor(id) {
-    super(() => '<div id="'+id+'">'+id+'</div>', id);
+    super(() => '<div id="' + id + '">' + id + '</div>', id);
   }
 }
 
@@ -18,14 +18,12 @@ describe('Component', () => {
     document.body.removeChild(document.getElementById('fixture'));
   });
 
-  
-
   it('should allow child tags', () => {
-    
+
 
     var realRenderer = () => '<div id="componentId"><ChildComponent id="child-0"></ChildComponent></div>';
     var renderer = () => realRenderer();
-    
+
     var parent = new Fronty.Component(
       renderer,
       'componentId', ['ChildComponent'] //tags that generate childs
@@ -33,7 +31,7 @@ describe('Component', () => {
 
     parent.createChildComponent = (tagName, childTagElement, id) => {
       if (tagName === 'ChildComponent') {
-        return new Fronty.Component(() =>'<div id="'+id+'">foo</div>', id);
+        return new Fronty.Component(() => '<div id="' + id + '">foo</div>', id);
       }
     };
 
@@ -43,13 +41,13 @@ describe('Component', () => {
 
     realRenderer = () => '<div id="componentId"></div>';
     parent.render();
-    
+
     expect(parent.getChildComponents().length).toBe(0);
-    
-    
+
+
     realRenderer = () => '<div id="componentId"><ChildComponent id="child-0"></ChildComponent></div>';
     parent.render();
-    
+
     expect(parent.getChildComponents().length).toBe(1);
 
     realRenderer = () => '<div id="componentId"><ChildComponent id="child-0"></ChildComponent><ChildComponent id="child-1"></ChildComponent></div>';
@@ -57,8 +55,8 @@ describe('Component', () => {
 
     expect(parent.getChildComponents().length).toBe(2);
   });
-  
-  
+
+
 
   it('should autodetect child component classes on child tags', () => {
     var realRenderer = () => '<div id="componentId"><ChildComponent id="child-0"></ChildComponent><ChildComponent id="child-1"></ChildComponent></div>';
@@ -71,7 +69,7 @@ describe('Component', () => {
     );
 
     parent.start();
-    
+
     expect(document.getElementById('child-0').textContent).toBe('child-0');
     expect(document.getElementById('child-1').textContent).toBe('child-1');
     expect(parent.getChildComponents().length).toBe(2);
@@ -79,7 +77,7 @@ describe('Component', () => {
     realRenderer = () => '<div id="componentId"></div>';
 
     parent.render();
-    
+
     expect(parent.getChildComponents().length).toBe(0);
   });
 
@@ -94,7 +92,7 @@ describe('Component', () => {
     );
 
     parent.start();
-    
+
     expect(document.getElementById('child-0').textContent).toBe('child-0');
     expect(document.getElementById('child-1').textContent).toBe('child-1');
     expect(parent.getChildComponents().length).toBe(2);
@@ -102,8 +100,8 @@ describe('Component', () => {
     realRenderer = () => '<div id="componentId"></div>';
 
     parent.render();
-    
+
     expect(parent.getChildComponents().length).toBe(0);
-  });  
+  });
 
 });
