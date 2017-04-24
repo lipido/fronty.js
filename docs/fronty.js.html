@@ -631,8 +631,6 @@ class Component {
         } else if (htmlContents.match(/^&lt;t[dh] .*/i) !== null) {
           newTree.appendChild(node.firstChild.firstChild.firstChild);
         } else {
-
-
           newTree.appendChild(node);
         }
         if (newTree.childNodes.length > 1) {
@@ -736,11 +734,12 @@ class Component {
           this._nodesWithCustomTag.push(root);
         }
       }
+      if (root.hasChildNodes()) {
+        for (let i = 0; i &lt; root.childNodes.length; i++) {
+          clone.appendChild(this._cloneAndIndex(root.childNodes[i]));
+        }
+      }
     }
-    for (let i = 0; i &lt; root.childNodes.length; i++) {
-      clone.appendChild(this._cloneAndIndex(root.childNodes[i]));
-    }
-
     return clone;
   }
 
@@ -1007,8 +1006,12 @@ class TreeComparator {
     // of the performed swap operations without modifying the original node1.childNodes
     let node1ChildNodes = [];
 
-    let node1Keys = TreeComparator._buildChildrenKeyIndex(node1);
-    let node2Keys = TreeComparator._buildChildrenKeyIndex(node2);
+    let node1Keys = {
+      lastPos: 0
+    };
+    let node2Keys = {
+      lastPos: 0
+    };
 
     while (child1pos &lt; node1.childNodes.length &amp;&amp; child2pos &lt; node2.childNodes.length) {
       let child1 = node1ChildNodes[child1pos] ? node1ChildNodes[child1pos] : node1.childNodes[child1pos];
@@ -1019,6 +1022,10 @@ class TreeComparator {
         let key2 = child2.getAttribute('key'); // maybe null (no-key)
 
         if (key1 !== key2) {
+
+          TreeComparator._buildChildrenKeyIndex(node1Keys, node1, child1pos, key2);
+          TreeComparator._buildChildrenKeyIndex(node2Keys, node2, child2pos, key1);
+
           if ((node2Keys[key1] !== undefined) &amp;&amp; (node1Keys[key2] !== undefined)) {
 
             //both nodes are in the initial and final result, so we only need to swap them
@@ -1035,8 +1042,22 @@ class TreeComparator {
 
           } else {
             //both nodes are NOT in the initial and final result
-            if (node1Keys[key2] === undefined) {
-              // if a key element in the new result is missing in the current tree, we should insert it
+            
+            if (node1Keys[key2] === undefined &amp;&amp; node2Keys[key1] === undefined) {
+              // the key element in new result is missing in the current tree and
+              // the current element in the current tree is also missing in the new result, so
+              // we can replace one by another
+              result.push({
+                mode: TreeComparator.PATCH_REPLACE_NODE,
+                toReplace: child1,
+                replacement: child2,
+              });
+              child1pos ++;
+              child2pos ++;
+            } else if (node1Keys[key2] === undefined) {
+              // if a key element in the new result is missing in the current tree, but the 
+              // element in the new result is also present, we insert the new element maintaining
+              // the current element we are comparing against
               result.push({
                 mode: TreeComparator.PATCH_INSERT_NODE,
                 toReplace: node1,
@@ -1046,16 +1067,16 @@ class TreeComparator {
               insertions++;
               child2pos++;
 
-            }
-            // and if a key element in the current result is missing in the new result, we should remove it
-            if (node2Keys[key1] === undefined) {
+            } else {
+            // and if a key element in the current result is missing in the new result
+            // and the key element in the new result is also present in the current result, we will
+            // delete the current element
               result.push({
                 mode: TreeComparator.PATCH_REMOVE_NODE,
                 toReplace: child1
               });
               child1pos++;
               deletions++;
-
             }
           }
 
@@ -1126,37 +1147,41 @@ class TreeComparator {
     arr[indexB] = temp;
   }
 
-  static _buildChildrenKeyIndex(node) {
-    let index = {};
-    let childpos = -1;
-    for (let i = 0; i &lt; node.childNodes.length; i++) {
+  static _buildChildrenKeyIndex(currentIndex, node, start, untilFind) {
+    start = Math.max(start, currentIndex.lastPos);
+    let i = start;
+    for (; i &lt; node.childNodes.length; i++) {
       let child = node.childNodes[i];
-      childpos++;
+
       if (child.nodeType === Node.ELEMENT_NODE) {
         let key = child.getAttribute('key');
         if (key) {
-          index[key] = {
+          currentIndex[key] = {
             node: child,
-            pos: childpos
+            pos: i
           };
+
+          if (key === untilFind) {
+            break;
+          }
         }
       }
     }
-    return index;
+    currentIndex.lastPos = i;
   }
 
   static _equalAttributes(node1, node2) {
+
     if (!node1.hasChildNodes() &amp;&amp; !node2.hasChildNodes()) {
       return node1.isEqualNode(node2);
     }
 
-    if (!node1.attributes &amp;&amp; !node2.attributes) {
+    if (node1.nodeType !== Node.ELEMENT_NODE || node2.nodeType !== Node.ELEMENT_NODE) {
       return true;
     }
 
-    if (!node1.attributes &amp;&amp; node2.attributes ||
-      node1.attributes &amp;&amp; !node2.attributes) {
-      return false;
+    if (node1.attributes.length === node2.attributes.length === 0) {
+      return true;
     }
 
     if (node1.attributes.length !== node2.attributes.length) {
@@ -1196,18 +1221,18 @@ class TreeComparator {
         }
       }
       // HTML nodes
-      var toReplace = patch.toReplace;
-      var replacement = patch.replacement;
+
       switch (patch.mode) {
         case TreeComparator.PATCH_SET_ATTRIBUTES:
+          var toReplace = patch.toReplace;
+          var replacement = patch.replacement;
           var attribute = null;
           for (let i = 0; i &lt; replacement.attributes.length; i++) {
             attribute = replacement.attributes[i];
             if (attribute.name === 'value' &amp;&amp;
               toReplace.value != attribute.value) {
               toReplace.value = attribute.value;
-            }
-            if (attribute.name === 'checked') {
+            } else if (attribute.name === 'checked') {
               toReplace.checked =
                 (attribute.checked !== false) ? true : false;
             }
@@ -1228,7 +1253,6 @@ class TreeComparator {
           break;
         case TreeComparator.PATCH_SET_NODE_VALUE:
           patch.toReplace.nodeValue = patch.replacement.nodeValue;
-
           break;
         case TreeComparator.PATCH_REMOVE_NODE:
           patch.toReplace.parentNode.removeChild(patch.toReplace);
@@ -1247,7 +1271,8 @@ class TreeComparator {
           TreeComparator._swapElements(patch.toReplace, patch.replacement);
           break;
         case TreeComparator.PATCH_REPLACE_NODE:
-          toReplace.parentNode.replaceChild(replacement, toReplace);
+          patch.toReplace.parentNode.replaceChild(patch.replacement, patch.toReplace);
+          break;
       }
     }
   }
@@ -1505,6 +1530,9 @@ class ModelComponent extends Component {
   }
 
   _mergeModelInOneObject() {
+    if (Object.keys(this.models).length === 1) {
+      return this.models['default'];
+    }
     var context = {};
     let modelNames = Object.keys(this.models);
     for (let i = 0; i &lt; modelNames.length; i++) {
@@ -1840,7 +1868,7 @@ export {
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Mon Apr 24 2017 19:18:43 GMT+0200 (CEST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Tue Apr 25 2017 01:49:42 GMT+0200 (CEST)
 </footer>
 
 <script> prettyPrint(); </script>

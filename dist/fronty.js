@@ -753,7 +753,6 @@ var Component = function () {
           } else if (htmlContents.match(/^<t[dh] .*/i) !== null) {
             newTree.appendChild(node.firstChild.firstChild.firstChild);
           } else {
-
             newTree.appendChild(node);
           }
           if (newTree.childNodes.length > 1) {
@@ -869,11 +868,12 @@ var Component = function () {
             this._nodesWithCustomTag.push(root);
           }
         }
+        if (root.hasChildNodes()) {
+          for (var i = 0; i < root.childNodes.length; i++) {
+            clone.appendChild(this._cloneAndIndex(root.childNodes[i]));
+          }
+        }
       }
-      for (var i = 0; i < root.childNodes.length; i++) {
-        clone.appendChild(this._cloneAndIndex(root.childNodes[i]));
-      }
-
       return clone;
     }
 
@@ -1186,8 +1186,12 @@ var TreeComparator = function () {
       // of the performed swap operations without modifying the original node1.childNodes
       var node1ChildNodes = [];
 
-      var node1Keys = TreeComparator._buildChildrenKeyIndex(node1);
-      var node2Keys = TreeComparator._buildChildrenKeyIndex(node2);
+      var node1Keys = {
+        lastPos: 0
+      };
+      var node2Keys = {
+        lastPos: 0
+      };
 
       while (child1pos < node1.childNodes.length && child2pos < node2.childNodes.length) {
         var child1 = node1ChildNodes[child1pos] ? node1ChildNodes[child1pos] : node1.childNodes[child1pos];
@@ -1198,6 +1202,10 @@ var TreeComparator = function () {
           var key2 = child2.getAttribute('key'); // maybe null (no-key)
 
           if (key1 !== key2) {
+
+            TreeComparator._buildChildrenKeyIndex(node1Keys, node1, child1pos, key2);
+            TreeComparator._buildChildrenKeyIndex(node2Keys, node2, child2pos, key1);
+
             if (node2Keys[key1] !== undefined && node1Keys[key2] !== undefined) {
 
               //both nodes are in the initial and final result, so we only need to swap them
@@ -1213,8 +1221,22 @@ var TreeComparator = function () {
               node1ChildNodes[node1Keys[key2].pos] = temp;
             } else {
               //both nodes are NOT in the initial and final result
-              if (node1Keys[key2] === undefined) {
-                // if a key element in the new result is missing in the current tree, we should insert it
+
+              if (node1Keys[key2] === undefined && node2Keys[key1] === undefined) {
+                // the key element in new result is missing in the current tree and
+                // the current element in the current tree is also missing in the new result, so
+                // we can replace one by another
+                result.push({
+                  mode: TreeComparator.PATCH_REPLACE_NODE,
+                  toReplace: child1,
+                  replacement: child2
+                });
+                child1pos++;
+                child2pos++;
+              } else if (node1Keys[key2] === undefined) {
+                // if a key element in the new result is missing in the current tree, but the 
+                // element in the new result is also present, we insert the new element maintaining
+                // the current element we are comparing against
                 result.push({
                   mode: TreeComparator.PATCH_INSERT_NODE,
                   toReplace: node1,
@@ -1223,9 +1245,10 @@ var TreeComparator = function () {
                 });
                 insertions++;
                 child2pos++;
-              }
-              // and if a key element in the current result is missing in the new result, we should remove it
-              if (node2Keys[key1] === undefined) {
+              } else {
+                // and if a key element in the current result is missing in the new result
+                // and the key element in the new result is also present in the current result, we will
+                // delete the current element
                 result.push({
                   mode: TreeComparator.PATCH_REMOVE_NODE,
                   toReplace: child1
@@ -1295,37 +1318,42 @@ var TreeComparator = function () {
     }
   }, {
     key: '_buildChildrenKeyIndex',
-    value: function _buildChildrenKeyIndex(node) {
-      var index = {};
-      var childpos = -1;
-      for (var i = 0; i < node.childNodes.length; i++) {
+    value: function _buildChildrenKeyIndex(currentIndex, node, start, untilFind) {
+      start = Math.max(start, currentIndex.lastPos);
+      var i = start;
+      for (; i < node.childNodes.length; i++) {
         var child = node.childNodes[i];
-        childpos++;
+
         if (child.nodeType === Node.ELEMENT_NODE) {
           var key = child.getAttribute('key');
           if (key) {
-            index[key] = {
+            currentIndex[key] = {
               node: child,
-              pos: childpos
+              pos: i
             };
+
+            if (key === untilFind) {
+              break;
+            }
           }
         }
       }
-      return index;
+      currentIndex.lastPos = i;
     }
   }, {
     key: '_equalAttributes',
     value: function _equalAttributes(node1, node2) {
+
       if (!node1.hasChildNodes() && !node2.hasChildNodes()) {
         return node1.isEqualNode(node2);
       }
 
-      if (!node1.attributes && !node2.attributes) {
+      if (node1.nodeType !== Node.ELEMENT_NODE || node2.nodeType !== Node.ELEMENT_NODE) {
         return true;
       }
 
-      if (!node1.attributes && node2.attributes || node1.attributes && !node2.attributes) {
-        return false;
+      if (node1.attributes.length === node2.attributes.length === 0) {
+        return true;
       }
 
       if (node1.attributes.length !== node2.attributes.length) {
@@ -1368,17 +1396,17 @@ var TreeComparator = function () {
           }
         }
         // HTML nodes
-        var toReplace = patch.toReplace;
-        var replacement = patch.replacement;
+
         switch (patch.mode) {
           case TreeComparator.PATCH_SET_ATTRIBUTES:
+            var toReplace = patch.toReplace;
+            var replacement = patch.replacement;
             var attribute = null;
             for (var _i = 0; _i < replacement.attributes.length; _i++) {
               attribute = replacement.attributes[_i];
               if (attribute.name === 'value' && toReplace.value != attribute.value) {
                 toReplace.value = attribute.value;
-              }
-              if (attribute.name === 'checked') {
+              } else if (attribute.name === 'checked') {
                 toReplace.checked = attribute.checked !== false ? true : false;
               }
               if (!toReplace.hasAttribute(attribute.name) || toReplace.getAttribute(attribute.name) !== attribute.value) {
@@ -1398,7 +1426,6 @@ var TreeComparator = function () {
             break;
           case TreeComparator.PATCH_SET_NODE_VALUE:
             patch.toReplace.nodeValue = patch.replacement.nodeValue;
-
             break;
           case TreeComparator.PATCH_REMOVE_NODE:
             patch.toReplace.parentNode.removeChild(patch.toReplace);
@@ -1417,7 +1444,8 @@ var TreeComparator = function () {
             TreeComparator._swapElements(patch.toReplace, patch.replacement);
             break;
           case TreeComparator.PATCH_REPLACE_NODE:
-            toReplace.parentNode.replaceChild(replacement, toReplace);
+            patch.toReplace.parentNode.replaceChild(patch.replacement, patch.toReplace);
+            break;
         }
       }
     }
@@ -1718,6 +1746,9 @@ var ModelComponent = function (_Component) {
   }, {
     key: '_mergeModelInOneObject',
     value: function _mergeModelInOneObject() {
+      if (Object.keys(this.models).length === 1) {
+        return this.models['default'];
+      }
       var context = {};
       var modelNames = Object.keys(this.models);
       for (var i = 0; i < modelNames.length; i++) {
