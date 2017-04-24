@@ -17,40 +17,40 @@ describe('RouterComponent', () => {
       }
       return currentAddEventListener(event, fn, boolean);
     };
-    window.location.href='#';
-    
+    window.location.href = '#';
+
   });
-  
+
   // remove the html fixture from the DOM
   afterEach(function() {
     document.body.removeChild(document.getElementById('fixture'));
   });
 
   it('should render a default route', () => {
-    var router = new Fronty.RouterComponent('router', () => '<div id="router"><div id="currentpage"></div></div>', 'currentpage', []);
-    
-    var page = new Fronty.ModelComponent(()=>'<div id="currentpage">Page1</div>', null, null);
-    
+    var router = new Fronty.RouterComponent('router', () => '<div id="router"><div id="currentpage"></div></div>', 'currentpage');
+
+    var page = new Fronty.ModelComponent(() => '<div id="currentpage">Page1</div>', null, null);
+
     router.setRouterConfig({
       page: {
         component: page
       },
       defaultRoute: 'page'
     });
-    
+
     router.start();
-    
+
     expect(document.getElementById('currentpage').textContent).toBe('Page1');
   });
-  
+
   it('should change the route', () => {
 
-    
-    var router = new Fronty.RouterComponent('router', () => '<div id="router"><div id="currentpage"></div></div>', 'currentpage', []);
-    
+
+    var router = new Fronty.RouterComponent('router', () => '<div id="router"><div id="currentpage"></div></div>', 'currentpage');
+
     var page = new Fronty.ModelComponent(() => '<div>Page1</div>', null, null);
     var page2 = new Fronty.ModelComponent(() => '<div>Page2</div>', null, null);
-    
+
     router.setRouterConfig({
       page: {
         component: page
@@ -60,30 +60,30 @@ describe('RouterComponent', () => {
       },
       defaultRoute: 'page'
     });
-    
+    //
     router.start();
-    
+
     expect(document.getElementById('currentpage').textContent).toBe('Page1');
-    
-    window.location.href='#page2';
+
+    window.location.href = '#page2';
     routerHashChangeCallback();
-    
+
     expect(document.getElementById('currentpage').textContent).toBe('Page2');
-    
-    window.location.href='#page';
+
+    window.location.href = '#page';
     routerHashChangeCallback();
-    
+
     expect(document.getElementById('currentpage').textContent).toBe('Page1');
-    
+
   });
-  
+
   it('should give the correct current page', () => {
-    
-    var router = new Fronty.RouterComponent('router', () => '<div id="currentpage"></div>', 'currentpage', []);
-    
-    var page = new Fronty.ModelComponent(()=>'<div>Page1</div>', null, null);
-    var page2 = new Fronty.ModelComponent(()=>'<div>Page2</div>', null, null);
-    
+
+    var router = new Fronty.RouterComponent('router', () => '<div id="currentpage"></div>', 'currentpage');
+
+    var page = new Fronty.ModelComponent(() => '<div>Page1</div>', null, null);
+    var page2 = new Fronty.ModelComponent(() => '<div>Page2</div>', null, null);
+
     router.setRouterConfig({
       page: {
         component: page
@@ -95,14 +95,14 @@ describe('RouterComponent', () => {
     });
 
     router.start();
-    
+
     expect(router.getCurrentPage()).toBe('page');
-    
-    window.location.href='#page2';    
+
+    window.location.href = '#page2';
     routerHashChangeCallback();
-    
+
     expect(router.getCurrentPage()).toBe('page2');
-    
+
   });
-  
+
 });

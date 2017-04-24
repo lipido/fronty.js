@@ -181,7 +181,7 @@
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line1597">line 1597</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line1617">line 1617</a>
     </li></ul></dd>
     
 
@@ -1081,6 +1081,189 @@ attach the listener to.</td>
 
     
 
+    <h4 class="name" id="addModel"><span class="type-signature"></span>addModel<span class="signature">(modelName, model)</span><span class="type-signature"></span></h4>
+
+    
+
+
+
+<div class="description">
+    Adds a secondary model to this model component.
+
+<p>ModelComponents can have more than one model. The model passed in the
+constructor is the 'default' model. Additional models must have a name.
+When the modelRenderer function is called, the passed object to the function
+will contain the 'default' model itself and all the additional models under 
+their respective names. For example, a code like:</p>
+<pre><code>
+var myModel = new Fronty.Model();
+myModel.value = 'foo';
+var mySecondaryModel = new Fronty.Model();
+mySecondaryModel.value = 'bar';
+var myModelComponent = new Fronty.ModelComponent(..., myModel, ...);
+myModelComponent.addModel('secondary', mySecondaryModel);
+</code></pre>
+will pass the following object to the model renderer function:
+<pre>
+<code>
+{
+   value: 'foo',
+   secondary: {
+       value: 'bar'
+   }
+}
+</code></pre>
+</div>
+
+
+
+
+
+
+
+
+
+    <h5>Parameters:</h5>
+    
+
+<table class="params">
+    <thead>
+    <tr>
+        
+        <th>Name</th>
+        
+
+        <th>Type</th>
+
+        
+
+        
+
+        <th class="last">Description</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    
+
+        <tr>
+            
+                <td class="name"><code>modelName</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type">String</span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The name for the additional model</td>
+        </tr>
+
+    
+
+        <tr>
+            
+                <td class="name"><code>model</code></td>
+            
+
+            <td class="type">
+            
+                
+<span class="param-type"><a href="Model.html">Model</a></span>
+
+
+            
+            </td>
+
+            
+
+            
+
+            <td class="description last">The additonal model</td>
+        </tr>
+
+    
+    </tbody>
+</table>
+
+
+
+
+
+
+<dl class="details">
+
+    
+
+    
+
+    
+    <dt class="inherited-from">Inherited From:</dt>
+    <dd class="inherited-from"><ul class="dummy"><li>
+        <a href="ModelComponent.html#addModel">ModelComponent#addModel</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+
+    
+    <dt class="tag-source">Source:</dt>
+    <dd class="tag-source"><ul class="dummy"><li>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line1424">line 1424</a>
+    </li></ul></dd>
+    
+
+    
+
+    
+
+    
+</dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+            
+
+    
+
     <h4 class="name" id="afterRender"><span class="type-signature"></span>afterRender<span class="signature">()</span><span class="type-signature"></span></h4>
 
     
@@ -1412,7 +1595,7 @@ in the parent HTML</td>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line1491">line 1491</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line1511">line 1511</a>
     </li></ul></dd>
     
 
@@ -1655,7 +1838,7 @@ adapt to your needs, you can override this method.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line1526">line 1526</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line1546">line 1546</a>
     </li></ul></dd>
     
 
@@ -2135,7 +2318,7 @@ adapt to your needs, you can override this method.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line1690">line 1690</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line1712">line 1712</a>
     </li></ul></dd>
     
 
@@ -2406,7 +2589,7 @@ a call to getRouteQueryParam('q') returns 1.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line1719">line 1719</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line1741">line 1741</a>
     </li></ul></dd>
     
 
@@ -2502,7 +2685,7 @@ internal model by calling this function.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line1703">line 1703</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line1725">line 1725</a>
     </li></ul></dd>
     
 
@@ -2656,7 +2839,7 @@ internal model by calling this function.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line1682">line 1682</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line1704">line 1704</a>
     </li></ul></dd>
     
 
@@ -3355,7 +3538,7 @@ renderer function.</p>
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line1432">line 1432</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line1472">line 1472</a>
     </li></ul></dd>
     
 
@@ -3487,7 +3670,7 @@ URL hashes to Components that should be showed.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line1667">line 1667</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line1689">line 1689</a>
     </li></ul></dd>
     
 
@@ -3818,7 +4001,7 @@ such a case, the RouterComponent goes to the page the model indicates.
     
     <dt class="tag-source">Source:</dt>
     <dd class="tag-source"><ul class="dummy"><li>
-        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line1642">line 1642</a>
+        <a href="fronty.js.html">fronty.js</a>, <a href="fronty.js.html#line1664">line 1664</a>
     </li></ul></dd>
     
 
@@ -4072,7 +4255,7 @@ intended to be overriden
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Mon Apr 24 2017 12:52:49 GMT+0200 (CEST)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Mon Apr 24 2017 19:18:43 GMT+0200 (CEST)
 </footer>
 
 <script> prettyPrint(); </script>

@@ -1606,22 +1606,62 @@ var ModelComponent = function (_Component) {
       return modelRenderer(_this5._mergeModelInOneObject());
     }, htmlNodeId, childTags));
 
-    _this5.models = _this5._createModels(model);
+    _this5.models = {};
+
+    if (model !== null && model !== undefined) {
+      _this5.models['default'] = model;
+    }
 
     _this5.updater = _this5.update.bind(_this5); // the update function bound to this
     return _this5;
   }
 
   /**
-   * The observer function added to all models this ModelComponent manages.<br>
-   * This function simply calls {@link ModelComponent#render|render}, but
-   * you can override it.
+   * Adds a secondary model to this model component.
    *
-   * @param {Model} model The model that has been updated.
+   * <p>ModelComponents can have more than one model. The model passed in the
+   * constructor is the 'default' model. Additional models must have a name.
+   * When the modelRenderer function is called, the passed object to the function
+   * will contain the 'default' model itself and all the additional models under 
+   * their respective names. For example, a code like:</p>
+   * <pre><code>
+   * var myModel = new Fronty.Model();
+   * myModel.value = 'foo';
+   * var mySecondaryModel = new Fronty.Model();
+   * mySecondaryModel.value = 'bar';
+   * var myModelComponent = new Fronty.ModelComponent(..., myModel, ...);
+   * myModelComponent.addModel('secondary', mySecondaryModel);
+   * </code></pre>
+   * will pass the following object to the model renderer function:
+   * <pre>
+   * <code>
+   * {
+   *    value: 'foo',
+   *    secondary: {
+   *        value: 'bar'
+   *    }
+   * }
+   * </code></pre>
+   * @param {String} modelName The name for the additional model
+   * @param {Model} model The additonal model
    */
 
 
   _createClass(ModelComponent, [{
+    key: 'addModel',
+    value: function addModel(modelName, model) {
+      this.models[modelName] = model;
+    }
+
+    /**
+     * The observer function added to all models this ModelComponent manages.<br>
+     * This function simply calls {@link ModelComponent#render|render}, but
+     * you can override it.
+     *
+     * @param {Model} model The model that has been updated.
+     */
+
+  }, {
     key: 'update',
     value: function update(model) {
       //console.log('Component [#' + this.htmlNodeId + ']: received update from Model [' + model.name + ']');
@@ -1635,9 +1675,10 @@ var ModelComponent = function (_Component) {
     value: function stop() {
 
       if (this.stopped === false) {
-        for (var i = 0; i < this.models.length; i++) {
-          var model = this.models[i];
-          model.removeObserver(this.updater);
+        for (var modelName in this.models) {
+          if (this.models.hasOwnProperty(modelName)) {
+            this.models[modelName].removeObserver(this.updater);
+          }
         }
       }
       _get(ModelComponent.prototype.__proto__ || Object.getPrototypeOf(ModelComponent.prototype), 'stop', this).call(this);
@@ -1645,10 +1686,12 @@ var ModelComponent = function (_Component) {
   }, {
     key: 'start',
     value: function start() {
+
       if (this.stopped) {
-        for (var i = 0; i < this.models.length; i++) {
-          var model = this.models[i];
-          model.addObserver(this.updater);
+        for (var modelName in this.models) {
+          if (this.models.hasOwnProperty(modelName)) {
+            this.models[modelName].addObserver(this.updater);
+          }
         }
       }
       _get(ModelComponent.prototype.__proto__ || Object.getPrototypeOf(ModelComponent.prototype), 'start', this).call(this);
@@ -1665,48 +1708,27 @@ var ModelComponent = function (_Component) {
   }, {
     key: 'setModel',
     value: function setModel(model) {
-      for (var i = 0; i < this.models.length; i++) {
-        var _model = this.models[i];
-        _model.removeObserver(this.updater);
-      }
+      var modelName = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'default';
 
-      this.models = this._createModels(model);
-
-      for (var _i2 = 0; _i2 < this.models.length; _i2++) {
-        var _model2 = this.models[_i2];
-        _model2.addObserver(this.updater);
-      }
-
+      this.models[modelName].removeObserver(this.updater);
+      this.models[modelName] = model;
+      this.models[modelName].addObserver(this.updater);
       this.render();
     }
   }, {
     key: '_mergeModelInOneObject',
     value: function _mergeModelInOneObject() {
       var context = {};
-      for (var i = 0; i < this.models.length; i++) {
-        var model = this.models[i];
-        context = Object.assign(context, model);
+      var modelNames = Object.keys(this.models);
+      for (var i = 0; i < modelNames.length; i++) {
+        var modelName = modelNames[i];
+        if (modelName === 'default') {
+          context = Object.assign(context, this.models['default']);
+        } else {
+          context[modelName] = this.models[modelName];
+        }
       }
       return context;
-    }
-  }, {
-    key: '_createModels',
-    value: function _createModels(model) {
-      if (!model) {
-        return [];
-      } else if (model instanceof Model) {
-        return [model];
-      } else if (model instanceof Array) {
-        for (var i = 0; i < model.length; i++) {
-          var modelItem = model[i];
-          if (!(modelItem instanceof Model)) {
-            throw 'Component [' + this.htmlNodeId + ']: the model must inherit Model';
-          }
-        }
-        return model;
-      } else {
-        throw 'Component [' + this.htmlNodeId + ']: the model must inherit Model';
-      }
     }
 
     /** 
@@ -1859,15 +1881,16 @@ var RouterComponent = function (_ModelComponent) {
     // add a routerModel to the given model(s), creating an array
     var routerModel = new Model('RouterModel');
 
-    if (model instanceof Array) {
-      model.push(routerModel);
-    } else if (model !== null && model !== undefined) {
-      model = [routerModel, model];
+    var additionalModels = {};
+    if (model !== null && model !== undefined) {
+      model = model;
     } else {
-      model = routerModel;
+      model = new Model('empty-model');
     }
 
-    var _this6 = _possibleConstructorReturn(this, (RouterComponent.__proto__ || Object.getPrototypeOf(RouterComponent)).call(this, modelRenderer, model, rootHtmlId));
+    var _this6 = _possibleConstructorReturn(this, (RouterComponent.__proto__ || Object.getPrototypeOf(RouterComponent)).call(this, modelRenderer, model, rootHtmlId, []));
+
+    _get(RouterComponent.prototype.__proto__ || Object.getPrototypeOf(RouterComponent.prototype), 'addModel', _this6).call(_this6, 'router', routerModel);
 
     _this6._routerModel = routerModel;
     _this6.routes = {};
@@ -2031,10 +2054,10 @@ var RouterComponent = function (_ModelComponent) {
           this.currentComponent.setHtmlNodeId(this.pageHtmlId);
 
           this.addChildComponent(this.currentComponent);
-          this.routes[currentPage].component.start();
+          //this.routes[currentPage].component.start();
         } else {
-          //console.log('Router undefined page ' + currentPage);
-        }
+            //console.log('Router undefined page ' + currentPage);
+          }
       } else {
           //console.log('Router: no default page defined');
         }

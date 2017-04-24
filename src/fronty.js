@@ -1383,9 +1383,46 @@ class ModelComponent extends Component {
       htmlNodeId, childTags
     );
 
-    this.models = this._createModels(model);
+    this.models = {};
+
+    if (model !== null && model !== undefined) {
+      this.models['default'] = model;
+    }
 
     this.updater = this.update.bind(this); // the update function bound to this
+  }
+
+  /**
+   * Adds a secondary model to this model component.
+   *
+   * <p>ModelComponents can have more than one model. The model passed in the
+   * constructor is the 'default' model. Additional models must have a name.
+   * When the modelRenderer function is called, the passed object to the function
+   * will contain the 'default' model itself and all the additional models under 
+   * their respective names. For example, a code like:</p>
+   * <pre><code>
+   * var myModel = new Fronty.Model();
+   * myModel.value = 'foo';
+   * var mySecondaryModel = new Fronty.Model();
+   * mySecondaryModel.value = 'bar';
+   * var myModelComponent = new Fronty.ModelComponent(..., myModel, ...);
+   * myModelComponent.addModel('secondary', mySecondaryModel);
+   * </code></pre>
+   * will pass the following object to the model renderer function:
+   * <pre>
+   * <code>
+   * {
+   *    value: 'foo',
+   *    secondary: {
+   *        value: 'bar'
+   *    }
+   * }
+   * </code></pre>
+   * @param {String} modelName The name for the additional model
+   * @param {Model} model The additonal model
+   */
+  addModel(modelName, model) {
+    this.models[modelName] = model;
   }
 
   /**
@@ -1404,19 +1441,22 @@ class ModelComponent extends Component {
   stop() {
 
     if (this.stopped === false) {
-      for (let i = 0; i < this.models.length; i++) {
-        let model = this.models[i];
-        model.removeObserver(this.updater);
+      for (let modelName in this.models) {
+        if (this.models.hasOwnProperty(modelName)) {
+          this.models[modelName].removeObserver(this.updater);
+        }
       }
     }
     super.stop();
   }
 
   start() {
+
     if (this.stopped) {
-      for (let i = 0; i < this.models.length; i++) {
-        let model = this.models[i];
-        model.addObserver(this.updater);
+      for (let modelName in this.models) {
+        if (this.models.hasOwnProperty(modelName)) {
+          this.models[modelName].addObserver(this.updater);
+        }
       }
     }
     super.start();
@@ -1429,48 +1469,28 @@ class ModelComponent extends Component {
    *
    * @param {Model|Array<Model>} model The model(s) to be set.
    */
-  setModel(model) {
-    for (let i = 0; i < this.models.length; i++) {
-      let model = this.models[i];
-      model.removeObserver(this.updater);
-    }
-
-    this.models = this._createModels(model);
-
-    for (let i = 0; i < this.models.length; i++) {
-      let model = this.models[i];
-      model.addObserver(this.updater);
-    }
-
+  setModel(model, modelName = 'default') {
+    this.models[modelName].removeObserver(this.updater);
+    this.models[modelName] = model;
+    this.models[modelName].addObserver(this.updater);
     this.render();
   }
 
   _mergeModelInOneObject() {
     var context = {};
-    for (let i = 0; i < this.models.length; i++) {
-      let model = this.models[i];
-      context = Object.assign(context, model);
+    let modelNames = Object.keys(this.models);
+    for (let i = 0; i < modelNames.length; i++) {
+      let modelName = modelNames[i];
+      if (modelName === 'default') {
+        context = Object.assign(context, this.models['default']);
+      } else {
+        context[modelName] = this.models[modelName];
+      }
     }
     return context;
   }
 
-  _createModels(model) {
-    if (!model) {
-      return [];
-    } else if (model instanceof Model) {
-      return [model];
-    } else if (model instanceof Array) {
-      for (let i = 0; i < model.length; i++) {
-        let modelItem = model[i];
-        if (!(modelItem instanceof Model)) {
-          throw 'Component [' + this.htmlNodeId + ']: the model must inherit Model';
-        }
-      }
-      return model;
-    } else {
-      throw 'Component [' + this.htmlNodeId + ']: the model must inherit Model';
-    }
-  }
+
 
   /** 
    * Overrides the child Component creation by also considering a "model"
@@ -1607,15 +1627,17 @@ class RouterComponent extends ModelComponent {
     // add a routerModel to the given model(s), creating an array
     var routerModel = new Model('RouterModel');
 
-    if (model instanceof Array) {
-      model.push(routerModel);
-    } else if (model !== null && model !== undefined) {
-      model = [routerModel, model];
+    var additionalModels = {};
+    if (model !== null && model !== undefined) {
+      model = model;
     } else {
-      model = routerModel;
+      model = new Model('empty-model');
     }
 
-    super(modelRenderer, model, rootHtmlId);
+
+    super(modelRenderer, model, rootHtmlId, []);
+
+    super.addModel('router', routerModel);
 
     this._routerModel = routerModel;
     this.routes = {};
@@ -1756,7 +1778,7 @@ class RouterComponent extends ModelComponent {
         this.currentComponent.setHtmlNodeId(this.pageHtmlId);
 
         this.addChildComponent(this.currentComponent);
-        this.routes[currentPage].component.start();
+        //this.routes[currentPage].component.start();
 
       } else {
         //console.log('Router undefined page ' + currentPage);
