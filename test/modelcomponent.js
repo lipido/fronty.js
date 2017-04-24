@@ -283,20 +283,25 @@ describe('ModelComponent', () => {
     newChildModel2.value = 'bar2';
     model.set(() => {
       // we change the references to new child models
-      model.items = [newChildModel, newChildModel2];  
+      model.items = [newChildModel, newChildModel2];
     });
-    
+
     expect(document.getElementById('child-0').textContent).toBe('foo2');
     expect(document.getElementById('child-1').textContent).toBe('bar2');
     expect(parent.getChildComponents().length).toBe(2);
 
+
+    // do we keep listening these new models?
+    newChildModel.set(()=>newChildModel.value='foo3');
+    expect(document.getElementById('child-0').textContent).toBe('foo3');
+    
     model.set(() => {
       model.items.length = 0;
     });
 
     expect(parent.getChildComponents().length).toBe(0);
   });
-  
+
   it('should update child component classes on child tag when model changes', () => {
     var renderer = (m) => {
       var res = '<div id="componentId">';
@@ -336,9 +341,9 @@ describe('ModelComponent', () => {
     newChildModel2.value = 'bar2';
     model.set(() => {
       // we change the references to new child models
-      model.items = [newChildModel, newChildModel2];  
+      model.items = [newChildModel, newChildModel2];
     });
-    
+
     expect(document.getElementById('child-0').textContent).toBe('foo2');
     expect(document.getElementById('child-1').textContent).toBe('bar2');
     expect(parent.getChildComponents().length).toBe(2);
@@ -355,7 +360,7 @@ describe('ModelComponent', () => {
       var res = '<div id="componentId">';
       for (var index = 0; index < m.items.length; index++) {
         var item = m.items[index];
-        res += '<ChildModelComponent id="child-' + item.id + '" model="items[' + index + ']" key="item-'+ item.id +'"></ChildModelComponent>';//
+        res += '<ChildModelComponent id="child-' + item.id + '" model="items[' + index + ']" key="item-' + item.id + '"></ChildModelComponent>'; //
       }
       res += '</div>';
       console.log(res);
@@ -389,7 +394,7 @@ describe('ModelComponent', () => {
       // we change the references to new child models
       model.items = [childModel2];
     });
-    
+
     expect(document.getElementById('child-2').textContent).toBe('bar');
     expect(parent.getChildComponents().length).toBe(1);
 
@@ -399,5 +404,4 @@ describe('ModelComponent', () => {
 
     expect(parent.getChildComponents().length).toBe(0);
   });
-
 });

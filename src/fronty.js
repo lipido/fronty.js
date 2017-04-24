@@ -550,7 +550,7 @@ class Component {
       // toReplace will be the real DOM node. In our virtual DOM, each node
       // has a reference to the real DOM node (see the next few lines).
       patch.toReplace = this._resolveRealNode(patch.toReplace);
-      
+
       if (patch.mode === TreeComparator.PATCH_INSERT_NODE ||
         patch.mode === TreeComparator.PATCH_APPEND_CHILD ||
         patch.mode === TreeComparator.PATCH_REPLACE_NODE) {
@@ -622,7 +622,9 @@ class Component {
 
   _resolveRealNode(node) {
 
-    // if the node has an id of a child node, we find it via id
+    // if the node has an id of a child node, we find it via id, since the
+    // "realNode" pointer does not references the real node, since the
+    // child components have replaced it by their root node.
     if (node.id !== undefined && this.childComponentIds[node.id] !== undefined) {
       return document.getElementById(node.id);
     }
@@ -1381,7 +1383,7 @@ class ModelComponent extends Component {
       htmlNodeId, childTags
     );
 
-    this.setModel(model);
+    this.models = this._createModels(model);
 
     this.updater = this.update.bind(this); // the update function bound to this
   }
@@ -1423,47 +1425,26 @@ class ModelComponent extends Component {
   /**
    * Sets the model for this ModelComponent.
    *
-   * <p>If this component is started and the model is different (=== comparison)
-   * from the previous model, the component will re-render</p>
+   * <p>The component will be re-rendered</p>
    *
    * @param {Model|Array<Model>} model The model(s) to be set.
    */
   setModel(model) {
-    let modelChanged = false;
-    if (!model) {
-      if (this.models === undefined || this.models.length !== 0) {
-        modelChanged = true;
-      }
-      /**
-       * The models this ModelComponent is handling
-       * @type {Array.<Model>}
-       */
-      this.models = [];
-    } else if (model instanceof Model) {
-      if (this.models === undefined || this.models.length !== 1 || this.models[0] !== model) {
-        modelChanged = true;
-      }
-      this.models = [model];
-    } else if (model instanceof Array) {
-
-      for (let i = 0; i < model.length; i++) {
-        let modelItem = model[i];
-        if (!(modelItem instanceof Model)) {
-          throw 'Component [' + this.htmlNodeId + ']: the model must inherit Model';
-        }
-      }
-      if (this.models === undefined || this.models !== model) {
-        modelChanged = true;
-      }
-      this.models = model;
-    } else {
-      throw 'Component [' + this.htmlNodeId + ']: the model must inherit Model';
+    for (let i = 0; i < this.models.length; i++) {
+      let model = this.models[i];
+      model.removeObserver(this.updater);
     }
 
-    if (modelChanged && this.stopped === false) {
-      this.render();
+    this.models = this._createModels(model);
+
+    for (let i = 0; i < this.models.length; i++) {
+      let model = this.models[i];
+      model.addObserver(this.updater);
     }
+
+    this.render();
   }
+
   _mergeModelInOneObject() {
     var context = {};
     for (let i = 0; i < this.models.length; i++) {
@@ -1471,6 +1452,24 @@ class ModelComponent extends Component {
       context = Object.assign(context, model);
     }
     return context;
+  }
+
+  _createModels(model) {
+    if (!model) {
+      return [];
+    } else if (model instanceof Model) {
+      return [model];
+    } else if (model instanceof Array) {
+      for (let i = 0; i < model.length; i++) {
+        let modelItem = model[i];
+        if (!(modelItem instanceof Model)) {
+          throw 'Component [' + this.htmlNodeId + ']: the model must inherit Model';
+        }
+      }
+      return model;
+    } else {
+      throw 'Component [' + this.htmlNodeId + ']: the model must inherit Model';
+    }
   }
 
   /** 

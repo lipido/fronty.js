@@ -772,7 +772,9 @@ var Component = function () {
     key: '_resolveRealNode',
     value: function _resolveRealNode(node) {
 
-      // if the node has an id of a child node, we find it via id
+      // if the node has an id of a child node, we find it via id, since the
+      // "realNode" pointer does not references the real node, since the
+      // child components have replaced it by their root node.
       if (node.id !== undefined && this.childComponentIds[node.id] !== undefined) {
         return document.getElementById(node.id);
       }
@@ -1604,7 +1606,7 @@ var ModelComponent = function (_Component) {
       return modelRenderer(_this5._mergeModelInOneObject());
     }, htmlNodeId, childTags));
 
-    _this5.setModel(model);
+    _this5.models = _this5._createModels(model);
 
     _this5.updater = _this5.update.bind(_this5); // the update function bound to this
     return _this5;
@@ -1655,8 +1657,7 @@ var ModelComponent = function (_Component) {
     /**
      * Sets the model for this ModelComponent.
      *
-     * <p>If this component is started and the model is different (=== comparison)
-     * from the previous model, the component will re-render</p>
+     * <p>The component will be re-rendered</p>
      *
      * @param {Model|Array<Model>} model The model(s) to be set.
      */
@@ -1664,40 +1665,19 @@ var ModelComponent = function (_Component) {
   }, {
     key: 'setModel',
     value: function setModel(model) {
-      var modelChanged = false;
-      if (!model) {
-        if (this.models === undefined || this.models.length !== 0) {
-          modelChanged = true;
-        }
-        /**
-         * The models this ModelComponent is handling
-         * @type {Array.<Model>}
-         */
-        this.models = [];
-      } else if (model instanceof Model) {
-        if (this.models === undefined || this.models.length !== 1 || this.models[0] !== model) {
-          modelChanged = true;
-        }
-        this.models = [model];
-      } else if (model instanceof Array) {
-
-        for (var i = 0; i < model.length; i++) {
-          var modelItem = model[i];
-          if (!(modelItem instanceof Model)) {
-            throw 'Component [' + this.htmlNodeId + ']: the model must inherit Model';
-          }
-        }
-        if (this.models === undefined || this.models !== model) {
-          modelChanged = true;
-        }
-        this.models = model;
-      } else {
-        throw 'Component [' + this.htmlNodeId + ']: the model must inherit Model';
+      for (var i = 0; i < this.models.length; i++) {
+        var _model = this.models[i];
+        _model.removeObserver(this.updater);
       }
 
-      if (modelChanged && this.stopped === false) {
-        this.render();
+      this.models = this._createModels(model);
+
+      for (var _i2 = 0; _i2 < this.models.length; _i2++) {
+        var _model2 = this.models[_i2];
+        _model2.addObserver(this.updater);
       }
+
+      this.render();
     }
   }, {
     key: '_mergeModelInOneObject',
@@ -1708,6 +1688,25 @@ var ModelComponent = function (_Component) {
         context = Object.assign(context, model);
       }
       return context;
+    }
+  }, {
+    key: '_createModels',
+    value: function _createModels(model) {
+      if (!model) {
+        return [];
+      } else if (model instanceof Model) {
+        return [model];
+      } else if (model instanceof Array) {
+        for (var i = 0; i < model.length; i++) {
+          var modelItem = model[i];
+          if (!(modelItem instanceof Model)) {
+            throw 'Component [' + this.htmlNodeId + ']: the model must inherit Model';
+          }
+        }
+        return model;
+      } else {
+        throw 'Component [' + this.htmlNodeId + ']: the model must inherit Model';
+      }
     }
 
     /** 
