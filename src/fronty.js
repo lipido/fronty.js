@@ -335,25 +335,28 @@ class Component {
 
     this.beforeRender(); //hook
 
-    // save child component subtrees
-    var savedChildNodes = this._saveChildNodes();
+    let firstRender = this._previousVirtualDOM === null;
 
-    // call the render function
-    var htmlContents = this.renderer();
+    if (firstRender) {
+      // first render, the currentTree to compare against is the actual DOM element
+      // where we will render
+      let currentTree = this._getComponentNode();
+      // clean the destiny node
+      while (currentTree.firstChild) {
+        currentTree.removeChild(currentTree.firstChild);
+      }
 
-    // the HTML is a string, parse it and then render
-    this._getDOMFromRendererOutput(htmlContents,
-      (newTree) => {
-        let firstRender = this._previousVirtualDOM === null;
-        // compute the differences between the previous DOM and the newTree,
-        // updating both the real DOM and the previous DOM.
-        this._renderNewTree(newTree);
+      this.buildFirstRenderTree((newTree) => {
 
-        // restore child component subtrees
-        this._restoreChildNodes(savedChildNodes);
+        this._previousVirtualDOM = document.createElement('div');
+        this._previousVirtualDOM.appendChild(newTree);
+
+        var clonedTree = this._cloneAndIndex(newTree);
+        currentTree.parentNode.replaceChild(clonedTree, currentTree);
+
 
         // put the global event listener on the root of this component
-        if (firstRender) this._updateEventListeners();
+        this._updateEventListeners();
 
         // create all children that may have appeared in the form of
         // custom tag HTML elements, or elements with the "fronty-component"
@@ -364,8 +367,114 @@ class Component {
 
         this.rendering = false;
       });
+    } else {
+      // re-render. Restore the previous tree
+      let currentTree = this._previousVirtualDOM.firstChild;
+
+      this.computePatches(currentTree, (patches) => {
+
+        // Apply patches for the previous DOM
+        TreeComparator.applyPatches(patches);
+
+
+        // Apply patches to the REAL DOM
+        // first, save child component subtrees
+        var savedChildNodes = this._saveChildNodes();
+
+        TreeComparator.applyPatches(patches, (patch) => {
+
+          // for the real DOM, we will not patch nodes that are currently rendered by child nodes
+          if (patch.toReplace.id && patch.replacement !== undefined && patch.replacement.id &&
+            patch.toReplace.id === patch.replacement.id && (this.childComponentIds[patch.toReplace.id] !== undefined)) {
+            return null;
+          }
+          // However, the patches contains nodes from the "virtual" DOM trees, not
+          // of the real DOM. We need no get the real nodes.
+          // Moreover, we will clone the nodes being inserted in the real DOM because
+          // we will reuse these patches to also patch our current virtual DOM so nodes
+          // cannot have two parents!
+          // To do these, we can use the patchMapping parameter of TreeComparator.applyPatches(),
+          // which allows us to change each being applied by another patch.
+
+          // toReplace will be the real DOM node. In our virtual DOM, each node
+          // has a reference to the real DOM node (see the next few lines).
+          patch.toReplace = this._resolveRealNode(patch.toReplace, savedChildNodes);
+
+          if (patch.mode === TreeComparator.PATCH_INSERT_NODE ||
+            patch.mode === TreeComparator.PATCH_APPEND_CHILD ||
+            patch.mode === TreeComparator.PATCH_REPLACE_NODE) {
+
+            // If we will insert new nodes, we will clone them as well as
+            // to add a reference from the cloned nodes (which will remain in our
+            // virtual DOM) to the corresponding clones (which will be inserted in the real DOM)
+            patch.replacement = this._cloneAndIndex(patch.replacement);
+
+          } else if (patch.mode === TreeComparator.PATCH_SWAP_NODES) {
+            // in swap-nodes mode, both are nodes to be found in the real DOM,
+            // so we search for the replacement in the real DOM
+            patch.replacement = this._resolveRealNode(patch.replacement, savedChildNodes);
+          }
+
+          return patch;
+        });
+        // restore child component subtrees
+        this._restoreChildNodes(savedChildNodes);
+
+        // create all children that may have appeared in the form of
+        // custom tag HTML elements, or elements with the "fronty-component"
+        // attribute.
+        this._createChildComponents();
+
+        this.afterRender(); //hook
+
+        this.rendering = false;
+      });
+    }
   }
 
+  buildFirstRenderTree(callback) {
+    this.renderNewDOM((newTree) => {
+      // copy id attribute to the root element of this component.
+      // the component does not need to specify any id in its rendering function
+      // root element
+      if (newTree.nodeType === Node.ELEMENT_NODE) {
+        newTree.setAttribute('id', this.getHtmlNodeId());
+      }
+      callback(newTree);
+    });
+  }
+
+  computePatches(currentTree, callback) {
+    // call the render function
+    let patches = null;
+
+    this.renderNewDOM((newTree) => {
+      // copy id attribute to the root element of this component.
+      // the component does not need to specify any id in its rendering function
+      // root element
+      if (newTree.nodeType === Node.ELEMENT_NODE) {
+        newTree.setAttribute('id', this.getHtmlNodeId());
+      }
+
+      var patches = TreeComparator.diff(currentTree, newTree, (node1, node2) => {
+
+        // Child component nodes should only be compared at attribute level in the parent component
+        if (node1.id && node2.id && node1.id === node2.id && (this.childComponentIds[node1.id] !== undefined)) {
+          return TreeComparator.COMPARE_POLICY_ATTRIBUTES;
+        }
+
+        if (node1.id && (!node2.id || node2.id !== node1.id) && (this.childComponentIds[node1.id] !== undefined)) {
+          // we want to compare a child component slot with another element, do a complete
+          // replacement
+          return TreeComparator.COMPARE_POLICY_REPLACE;
+        }
+
+        // By default, do a regular comparison
+        return TreeComparator.COMPARE_POLICY_DIFF;
+      });
+      callback(patches);
+    });
+  }
   // lifecycle management
   /**
    * Stops this Component and all of its children.<br>
@@ -436,7 +545,6 @@ class Component {
     }
   }
 
-
   // Hooks
 
   /**
@@ -468,120 +576,22 @@ class Component {
   }
 
   // "private" methods
-  _renderNewTree(newTree) {
-
-    let firstRender = this._previousVirtualDOM === null;
-
-    //  Get the currentTree to we will compare against
-    let currentTree = null;
-    if (!firstRender) {
-      // re-render. Restore the previous tree
-      currentTree = this._previousVirtualDOM.firstChild;
-    } else {
-      // first render, the currentTree to compare against is the actual DOM element
-      // where we will render
-      currentTree = this._getComponentNode();
-      // clean the destiny node
-      while (currentTree.firstChild) {
-        currentTree.removeChild(currentTree.firstChild);
-      }
-    }
-
-    // copy id attribute to the root element of this component.
-    // the component does not need to specify any id in its rendering function
-    // root element
-    if (newTree.nodeType === Node.ELEMENT_NODE) {
-      newTree.setAttribute('id', this.getHtmlNodeId());
-    }
-
-    // TODO: create here a hook to preprocess newTree before comparing
-
-    // compare the two trees: currentTree vs. newTree. 
-    // This comparison is between the two virtual DOM trees
-    var patches = TreeComparator.diff(currentTree, newTree, (node1, node2) => {
-
-      // Special policy to do this comparison:
-
-      // 1. Ignore and totally replace the contents of the destinty node if we are in the first render. 
-      if (firstRender) return TreeComparator.COMPARE_POLICY_REPLACE;
-
-      // 2. Child component nodes should only be compared at attribute level in the parent component
-      if (node1.id && node2.id && node1.id === node2.id && (this.childComponentIds[node1.id] !== undefined)) {
-        return TreeComparator.COMPARE_POLICY_ATTRIBUTES;
-      }
-
-      if (node1.id && (!node2.id || node2.id !== node1.id) && (this.childComponentIds[node1.id] !== undefined)) {
-        // we want to compare a child component slot with another element, do a complete
-        // replacement
-        return TreeComparator.COMPARE_POLICY_REPLACE;
-      }
-
-      // By default, do a regular comparison
-      return TreeComparator.COMPARE_POLICY_DIFF;
-    });
-
-    // Apply patches to our previous tree
-    if (!firstRender) {
-      // On re-render it will be the patches previous virtual DOM
-      //this._previousVirtualDOM.replaceChild(currentTree, this._previousVirtualDOM.firstChild);
-      TreeComparator.applyPatches(patches);
-    } else {
-      // in the first render, the next previous tree will be the current newTree
-      this._previousVirtualDOM = document.createElement('div');
-      this._previousVirtualDOM.appendChild(newTree);
-    }
-
-    // Apply patches to the REAL DOM
-    TreeComparator.applyPatches(patches, (patch) => {
-
-      // for the real DOM, we will not patch nodes that are currently rendered by child nodes
-      if (patch.toReplace.id && patch.replacement !== undefined && patch.replacement.id &&
-        patch.toReplace.id === patch.replacement.id && (this.childComponentIds[patch.toReplace.id] !== undefined)) {
-        return null;
-      }
-      // However, the patches contains nodes from the "virtual" DOM trees, not
-      // of the real DOM. We need no get the real nodes.
-      // Moreover, we will clone the nodes being inserted in the real DOM because
-      // we will reuse these patches to also patch our current virtual DOM so nodes
-      // cannot have two parents!
-      // To do these, we can use the patchMapping parameter of TreeComparator.applyPatches(),
-      // which allows us to change each being applied by another patch.
-
-      // toReplace will be the real DOM node. In our virtual DOM, each node
-      // has a reference to the real DOM node (see the next few lines).
-      patch.toReplace = this._resolveRealNode(patch.toReplace);
-
-      if (patch.mode === TreeComparator.PATCH_INSERT_NODE ||
-        patch.mode === TreeComparator.PATCH_APPEND_CHILD ||
-        patch.mode === TreeComparator.PATCH_REPLACE_NODE) {
-
-        // If we will insert new nodes, we will clone them as well as
-        // to add a reference from the cloned nodes (which will remain in our
-        // virtual DOM) to the corresponding clones (which will be inserted in the real DOM)
-        patch.replacement = this._cloneAndIndex(patch.replacement);
-
-      } else if (patch.mode === TreeComparator.PATCH_SWAP_NODES) {
-        // in swap-nodes mode, both are nodes to be found in the real DOM,
-        // so we search for the replacement in the real DOM
-        patch.replacement = this._resolveRealNode(patch.replacement);
-      }
-
-      return patch;
-    });
-
-
-  }
 
   /*
    * Creates a new DOM tree from the renderer output. If the renderer output
    * is a string, we will get the dom by using the this._parsingService.
    * If it is a DOM tree, we do not anything.
    */
-  _getDOMFromRendererOutput(htmlContents, callback) {
+  renderNewDOM(callback) {
+
+    // call the render function
+    var htmlContents = this.renderer();
+
+
     if (typeof htmlContents === 'string') {
       // We need to parse
 
-      htmlContents = this.renderer().trim();
+      htmlContents = htmlContents.trim();
       var correctedHtmlContents = htmlContents;
       // construct the new tree given by the render function
       // fix: for roots starting with TR, TD or TH, they cannot be direct
@@ -613,18 +623,19 @@ class Component {
       });
     } else {
 
-      // htmlContents is a real DOM
+      // assume htmlContents is a real DOM
       callback(htmlContents);
     }
   }
 
-  _resolveRealNode(node) {
+  _resolveRealNode(node, savedChildNodes) {
 
-    // if the node has an id of a child node, we find it via id, since the
+    // if the node has an id of a child node, we find it in the savedChildNodes, since the
     // "realNode" pointer does not references the real node, since the
     // child components have replaced it by their root node.
     if (node.id !== undefined && this.childComponentIds[node.id] !== undefined) {
-      return document.getElementById(node.id);
+      //return document.getElementById(node.id);
+      return savedChildNodes[node.id];
     }
 
     // use the reference from the node to its corresponding clone in the real DOM
@@ -649,6 +660,7 @@ class Component {
    * Restores the child subtrees in their corresponding slots.
    */
   _restoreChildNodes(savedChildNodes) {
+    //let savedChilds = Object.keys(savedChildNodes).length;
     for (let i = 0; i < this.childComponents.length; i++) {
       var childComponent = this.childComponents[i];
       var childId = childComponent.getHtmlNodeId();
@@ -735,8 +747,8 @@ class Component {
    */
   _createDynamicChildComponents(nodes) {
     let bufferedParsingService = new Component.BufferedParsingService();
-    bufferedParsingService.start();
 
+    bufferedParsingService.start();
 
     for (let j = nodes.length - 1; j >= 0; j--) {
       var node = nodes[j];
@@ -753,6 +765,7 @@ class Component {
         }
       }
     }
+
     bufferedParsingService.finish();
   }
 
@@ -761,7 +774,7 @@ class Component {
     if (!this.getChildComponent(nodeId)) {
       this._createAndAddChildComponent(className, node, nodeId, bufferedParsingService);
     } else {
-      this.updateChildComponent(className, node, nodeId, bufferedParsingService);
+      this.updateChildComponent(className, node, nodeId);
     }
   }
 
@@ -770,7 +783,7 @@ class Component {
    * intended to be overriden
    * 
    */
-  updateChildComponent(className, node, nodeId, bufferedParsingService) {
+  updateChildComponent(className, node, nodeId) {
 
   }
 
@@ -903,26 +916,30 @@ class TreeComparator {
   static diff(node1, node2, comparePolicy) {
     if (comparePolicy) {
       var actionToDo = comparePolicy(node1, node2);
-      if (actionToDo === TreeComparator.COMPARE_POLICY_SKIP) {
-        return [];
-      } else if (actionToDo === TreeComparator.COMPARE_POLICY_ATTRIBUTES) {
-        if (!TreeComparator._equalAttributes(node1, node2)) {
-          // if there are some differences in attributtes, add this patch also.
+      switch (actionToDo) {
+        case TreeComparator.COMPARE_POLICY_SKIP:
+          return [];
+          break; //jshint ignore:line
+        case TreeComparator.COMPARE_POLICY_ATTRIBUTES:
+          if (!TreeComparator._equalAttributes(node1, node2)) {
+            // if there are some differences in attributtes, add this patch also.
+            return [{
+              mode: TreeComparator.PATCH_SET_ATTRIBUTES,
+              toReplace: node1,
+              replacement: node2
+            }];
+          } else {
+            return [];
+          }
+          break;
+        case TreeComparator.COMPARE_POLICY_REPLACE:
           return [{
-            mode: TreeComparator.PATCH_SET_ATTRIBUTES,
+            mode: TreeComparator.PATCH_REPLACE_NODE,
             toReplace: node1,
             replacement: node2
           }];
-        } else {
-          return [];
-        }
-      } else if (actionToDo === TreeComparator.COMPARE_POLICY_REPLACE) {
-        return [{
-          mode: TreeComparator.PATCH_REPLACE_NODE,
-          toReplace: node1,
-          replacement: node2
-        }];
-      } //otherwise, i.e.: TreeComparator.COMPARE_POLICY_DIFF, do nothing
+          //case TreeComparator.COMPARE_POLICY_DIFF: do nothing, continue
+      }
     }
 
     var result = [];
@@ -1014,7 +1031,7 @@ class TreeComparator {
 
           } else {
             //both nodes are NOT in the initial and final result
-            
+
             if (node1Keys[key2] === undefined && node2Keys[key1] === undefined) {
               // the key element in new result is missing in the current tree and
               // the current element in the current tree is also missing in the new result, so
@@ -1024,8 +1041,8 @@ class TreeComparator {
                 toReplace: child1,
                 replacement: child2,
               });
-              child1pos ++;
-              child2pos ++;
+              child1pos++;
+              child2pos++;
             } else if (node1Keys[key2] === undefined) {
               // if a key element in the new result is missing in the current tree, but the 
               // element in the new result is also present, we insert the new element maintaining
@@ -1040,9 +1057,9 @@ class TreeComparator {
               child2pos++;
 
             } else {
-            // and if a key element in the current result is missing in the new result
-            // and the key element in the new result is also present in the current result, we will
-            // delete the current element
+              // and if a key element in the current result is missing in the new result
+              // and the key element in the new result is also present in the current result, we will
+              // delete the current element
               result.push({
                 mode: TreeComparator.PATCH_REMOVE_NODE,
                 toReplace: child1
@@ -1548,7 +1565,7 @@ class ModelComponent extends Component {
     return newComponent;
   }
 
-  updateChildComponent(className, element, nodeId, bufferedParsingService) {
+  updateChildComponent(className, element, nodeId) {
     let component = this.getChildComponent(nodeId);
     let currentModel = component.modelItemFromAttribute;
     let modelAtt = element.getAttribute('model');
@@ -1598,7 +1615,7 @@ class ModelComponent extends Component {
 
     } else {
       // complex including (), use eval
-      modelItem = eval('oneModelObject.' + element.getAttribute('model')); //jshint ignore:line
+      modelItem = eval('oneModelObject.' + modelAtt); //jshint ignore:line
     }
     return modelItem;
   }

@@ -25,7 +25,7 @@ module.exports = function(grunt) {
     },
     watch: {
       files: ['src/**/*.js', 'test/**/*.js', 'karma.conf.js'],
-      tasks: ['jshint', 'babel', 'webpack', 'test', 'jsdoc']
+      tasks: ['jshint', 'babel', 'webpack', 'test']
     },
     babel: {
       options: {
@@ -73,7 +73,8 @@ module.exports = function(grunt) {
 
   grunt.registerTask('test', ['karma']);
   grunt.registerTask('dev', ['watch']);
+  grunt.registerTask('doc', ['jsdoc']);
 
   // Default task(s).
-  grunt.registerTask('default', ['jshint', 'babel', 'webpack', 'test', 'jsdoc', 'uglify']);
+  grunt.registerTask('default', ['jshint', 'babel', 'webpack', 'test', 'uglify']);
 };

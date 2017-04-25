@@ -114,13 +114,13 @@ describe('Component', () => {
     expect(document.getElementById('childId').textContent).toBe('child!');
     
   });
-  
+
   it('should allow to swap child components on parent', () => {
     var realRenderer = () => '<div id="componentId"><div id="childId1"></div><div id="childId2"></div></div>';
     var renderer = () => realRenderer();
     
     var parent = new Fronty.Component(renderer, 'componentId');
-    var child = new Fronty.Component(() => '<div id="childId">child!</div>', 'childId1');
+    var child = new Fronty.Component(() => '<div id="childId1">child!</div>', 'childId1');
     var child2 = new Fronty.Component(() => '<div id="childId2">child 2!</div>', 'childId2');
     
     parent.addChildComponent(child);
@@ -132,12 +132,12 @@ describe('Component', () => {
     expect(document.getElementById('childId2').textContent).toBe('child 2!');
     
     realRenderer = () => '<div id="componentId"><div id="childId2"></div><div id="childId1"></div></div></div>';
-    
+
     parent.render();
     
     expect(document.getElementById('childId1').textContent).toBe('child!');
     expect(document.getElementById('childId2').textContent).toBe('child 2!');
-    
+    expect(document.getElementById('componentId').firstChild.id).toBe('childId2');
   });
   
   
