@@ -1664,6 +1664,8 @@ class RouterComponent extends ModelComponent {
    * 
    * @param {String} rootHtmlId The HTML element id where the router renders.
    * @param {Function} modelRenderer the model renderer function
+   * @param {String} routeContentsHtmlId The HTML element id where the different views of the router are placed
+   * @param {Model} model The model
    */
   constructor(rootHtmlId, modelRenderer, routeContentsHtmlId, model) {
 

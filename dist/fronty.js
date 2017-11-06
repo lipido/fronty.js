@@ -1924,6 +1924,8 @@ var RouterComponent = function (_ModelComponent) {
    * 
    * @param {String} rootHtmlId The HTML element id where the router renders.
    * @param {Function} modelRenderer the model renderer function
+   * @param {String} routeContentsHtmlId The HTML element id where the different views of the router are placed
+   * @param {Model} model The model
    */
   function RouterComponent(rootHtmlId, modelRenderer, routeContentsHtmlId, model) {
     _classCallCheck(this, RouterComponent);
