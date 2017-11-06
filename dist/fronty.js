@@ -1638,9 +1638,7 @@ var ModelComponent = function (_Component) {
    *
    * @param {Function} modelRenderer A renderer function which accepts a
    * {@link Model} as argument.
-   * @param {Model|Array.<Model>} model The model or an array of models. In case of
-   * an array is passed, the renderer function will receive a single model object
-   * which combines all the properties of those models.
+   * @param {Model} model The default model. You can add more models with {@link ModelComponent#addModel}.
    * @param {String} htmlNodeId The id of the HTML element where this Component should 
    *                              render to.
    * @param {Array.<String>} [childTags] An optional Array of strings of custom-tags for dynamically created child Components.
