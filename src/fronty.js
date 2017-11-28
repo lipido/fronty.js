@@ -811,7 +811,12 @@ class Component {
   _eventsListener(event) {
     for (let i = 0; i < this.eventListeners.length; i++) {
       let listener = this.eventListeners[i];
-      if (event.target.matches(listener.query) && listener.eventType === event.type) {
+      if (
+        (   //the target matches exactly with the query
+            event.target.matches(listener.query) ||
+            //the target is a child node of the query
+            event.target.matches(listener.query+" *") 
+        ) && listener.eventType === event.type) {
         event.preventDefault();
         listener.callback(event);
         return;
