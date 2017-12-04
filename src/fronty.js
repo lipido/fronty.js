@@ -302,7 +302,6 @@ class Component {
   /**
    * Render this Component, which consists in:
    * <ol>
-   * <li>Save the child Component DOM trees, because they may be moved to another place in the DOM.</li>
    * <li>Call the {@link Component#renderer|renderer function}.</li>
    * <li>Calculate the differences between the previous "virtual" DOM of this Component
    * and the new "virtual" DOM provided by the renderer function, skipping those
@@ -378,8 +377,6 @@ class Component {
 
 
         // Apply patches to the REAL DOM
-        // first, save child component subtrees
-        var savedChildNodes = this._saveChildNodes();
 
         TreeComparator.applyPatches(patches, (patch) => {
 
@@ -398,7 +395,7 @@ class Component {
 
           // toReplace will be the real DOM node. In our virtual DOM, each node
           // has a reference to the real DOM node (see the next few lines).
-          patch.toReplace = this._resolveRealNode(patch.toReplace, savedChildNodes);
+          patch.toReplace = this._resolveRealNode(patch.toReplace);
 
           if (patch.mode === TreeComparator.PATCH_INSERT_NODE ||
             patch.mode === TreeComparator.PATCH_APPEND_CHILD ||
@@ -412,13 +409,13 @@ class Component {
           } else if (patch.mode === TreeComparator.PATCH_SWAP_NODES) {
             // in swap-nodes mode, both are nodes to be found in the real DOM,
             // so we search for the replacement in the real DOM
-            patch.replacement = this._resolveRealNode(patch.replacement, savedChildNodes);
+            patch.replacement = this._resolveRealNode(patch.replacement);
           }
 
           return patch;
         });
         // restore child component subtrees
-        this._restoreChildNodes(savedChildNodes);
+        this._restoreChildNodes();
 
         // create all children that may have appeared in the form of
         // custom tag HTML elements, or elements with the "fronty-component"
@@ -628,14 +625,13 @@ class Component {
     }
   }
 
-  _resolveRealNode(node, savedChildNodes) {
-
-    // if the node has an id of a child node, we find it in the savedChildNodes, since the
-    // "realNode" pointer does not references the real node, since the
-    // child components have replaced it by their root node.
+  _resolveRealNode(node) {
+    // if the node has an id of a child node, we find it the *child* previous real DOM,
+    // since the"realNode" pointer does not references the real node, because it has
+    // been replaced by the child root node.
     if (node.id !== undefined && this.childComponentIds[node.id] !== undefined) {
       //return document.getElementById(node.id);
-      return savedChildNodes[node.id];
+      return this.childComponentIds[node.id]._getPreviousRealRootNode();
     }
 
     // use the reference from the node to its corresponding clone in the real DOM
@@ -659,36 +655,31 @@ class Component {
   /*
    * Restores the child subtrees in their corresponding slots.
    */
-  _restoreChildNodes(savedChildNodes) {
-    //let savedChilds = Object.keys(savedChildNodes).length;
+  _restoreChildNodes() {
+    
     for (let i = 0; i < this.childComponents.length; i++) {
       var childComponent = this.childComponents[i];
       var childId = childComponent.getHtmlNodeId();
-      if (this._getChildNode(childId) !== null && savedChildNodes[childId] !== undefined) {
-        var currentComponentNode = this._getChildNode(childId);
-        if (savedChildNodes[childId] != currentComponentNode) {
-          currentComponentNode.parentNode.replaceChild(savedChildNodes[childId], currentComponentNode);
-        }
-        //childComponent.afterParentRender();
-      }
 
+      if (this._getChildNode(childId) !== null) {
+        let currentComponentNode = this._getChildNode(childId);
+        if (childComponent._getPreviousRealRootNode() !== null && 
+            childComponent._getPreviousRealRootNode() !== currentComponentNode) {
+
+          currentComponentNode.parentNode.replaceChild(
+            childComponent._getPreviousRealRootNode(),
+            currentComponentNode);  
+        }
+      }
     }
   }
 
   /*
-   * Creates and returns an index of child node ids to their current DOM element.
+   * Gets the root node in the real dom where this component previously rendered.
+   *
    */
-  _saveChildNodes() {
-    var savedChildNodes = {};
-    for (let i = 0; i < this.childComponents.length; i++) {
-      var childComponent = this.childComponents[i];
-      var childId = childComponent.getHtmlNodeId();
-      if (this._getChildNode(childId) !== null) {
-        savedChildNodes[childId] = this._getChildNode(childId);
-      }
-    }
-
-    return savedChildNodes;
+  _getPreviousRealRootNode() {
+    return this._previousVirtualDOM !== null? this._previousVirtualDOM.firstChild.realNode: null;
   }
 
   _getComponentNode() {

@@ -163,4 +163,33 @@ describe('Component', () => {
     expect(document.getElementById('childId1').classList.length).toBe(0);
     
   });
+
+  it('should tolerate destruction and reconstruction of its root node', () => {
+    var realRenderer = () => '<div id="componentId"><div id="childId1"></div></div>';
+    var renderer = () => realRenderer();
+
+    var parent = new Fronty.Component(renderer, 'componentId');
+    var child = new Fronty.Component(() => '<div id="childId"><p id="paragraph">child!</p></div>', 'childId1');
+
+    parent.addChildComponent(child);
+
+    parent.start();
+
+    var paragraph = document.getElementById('paragraph');
+    expect(paragraph.textContent).toBe('child!');
+
+    realRenderer = () => '<div id="componentId"></div>';
+    parent.render();
+
+    expect(document.getElementById('paragraph')).toBe(null);
+
+    realRenderer = () => '<div id="componentId"><div id="childId1"></div></div>';
+    parent.render();
+
+    expect(document.getElementById('paragraph').textContent).toBe('child!');
+
+    // ensure that the paragraph is the same html node (do not touch)
+    expect(paragraph).toBe(document.getElementById('paragraph'));
+
+  });
 });
