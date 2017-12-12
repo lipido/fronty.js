@@ -16,6 +16,7 @@ module.exports = function(config) {
     // list of files / patterns to load in the browser
     files: [
       'dist/fronty.js',
+      'test/logutils.js',
       'test/*.js'
     ],
 

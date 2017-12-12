@@ -102,7 +102,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
   author: lipido
 */
 
-/** 
+/**
  *  Class representing a component, which is an object whose responsibilities
  *  are:
  *  <ul>
@@ -113,12 +113,12 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  *      render in an element inside this component. When <em>this</em> Component
  *      re-renders, it restores its child's subtrees on their places. Child Components
  *      can be added manually (See {@link Component#addChildComponent}) or created
- *      dynamically by <em>this</em> Component via 
- *      "fronty-component" attribute or via custom tag elements 
+ *      dynamically by <em>this</em> Component via
+ *      "fronty-component" attribute or via custom tag elements
  *      (See {@link Component#createChildComponent} and {@link Component#childTags}).</li>
  *    <li>Manage event listeners, restoring them each re-rendering.</li>
  *  </ul>
- *  <p>Components render when you call {@link Component#start|start()}, 
+ *  <p>Components render when you call {@link Component#start|start()},
  * and update each time you call the {@link Component#render|render()}
  * function.</p>
  *
@@ -137,7 +137,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  *  );
  * component.start(); // first render
  * setInterval(() => {
- *    counter++; 
+ *    counter++;
  *    component.render(); // component re-render
  * }, 1000);
  */
@@ -148,10 +148,10 @@ var Component = function () {
    *
    * @constructor
    * @param {Function} renderer A non-parameter function that returns HTML.
-   * @param {String} htmlNodeId The id of the HTML element where this Component should 
+   * @param {String} htmlNodeId The id of the HTML element where this Component should
    *                              render to.
    * @param {Array.<String>} [childTags] An optional Array of strings of custom-tags for
-   *                         dynamically created child Components 
+   *                         dynamically created child Components
    *                        (See {@link Component#createChildComponent}).
    */
   function Component(renderer, htmlNodeId, childTags) {
@@ -197,7 +197,7 @@ var Component = function () {
     // do not render until the component is started with start()
     /**
      * Whether this Component is stopped.<br>
-     * 
+     *
      * Stopped Components do not render.
      *
      * @name Component#stopped
@@ -207,7 +207,7 @@ var Component = function () {
     this.stopped = true;
 
     /**
-     * The event listeners that this Component is managing. 
+     * The event listeners that this Component is managing.
      * See {@link Component#addEventListener|addEventListener()}.
      *
      * @name Component#eventListeners
@@ -239,7 +239,7 @@ var Component = function () {
     // The DOM tree of this component as it was in the previous render.
     // We will not compare the new rendered trees coming from the renderer function
     // to the real DOM. Why? We want that third-party libraries could do some changes
-    // in the real DOM so, if it is not necessary, we will try not to overwrite their 
+    // in the real DOM so, if it is not necessary, we will try not to overwrite their
     // changes. To achieve this, we keep a "virtual DOM" that may not be
     // exactly the real DOM, so we only change things that are under our control,
     // things that we added in the previous render.
@@ -300,7 +300,7 @@ var Component = function () {
      * <p>The HTML element where the child Component will render will not be re-rendered
      * when <em>this</em> Component (the parent) is re-rendered.</p>
      *
-     * <p>The child component will be started (and thus immediately rendered) or stopped 
+     * <p>The child component will be started (and thus immediately rendered) or stopped
      * if this Component is currently started or stopped, respectively.</p>
      *
      * @param {Component} component The child Component.
@@ -324,7 +324,7 @@ var Component = function () {
      * given HTML element. This method is intended to be overrided
      * by subclasses.
      *
-     * <p>Parent components define where to create new children via their rendered 
+     * <p>Parent components define where to create new children via their rendered
      * HTML in two ways:
      * <ul>
      * <li>Via <code>fronty-component</code> attribute. An element like
@@ -342,10 +342,10 @@ var Component = function () {
      * </ul></p>
      * <p>Everytime a new element indicating that a child should be created, this
      * method is called to create the real instance.</p>
-     * 
+     *
      * <p><b>Note:</b> By default, this function uses <code>eval(''+className)</code>
      * to create the instance. If you are packing your application and this library
-     * in different modules, eval may fail in finding the className. You must 
+     * in different modules, eval may fail in finding the className. You must
      * override the method to create the child.</p>
      *
      * @param {String} className The class name found in the HTML element
@@ -436,11 +436,11 @@ var Component = function () {
      * and save it as the next previous "virtual" DOM.</li>
      * <li>Restore the child Components in their new places if they where moved to another
      * part in the DOM.</li>
-     * <li>Restore event listeners in their corresponding elements, because 
+     * <li>Restore event listeners in their corresponding elements, because
      * some could be moved to another place in the DOM.</li>
      * <li>Create child nodes if new elements with tag name in
      * {@link Component#childTags} are found in the HTML.</li>
-     * </ol> 
+     * </ol>
      */
 
   }, {
@@ -605,7 +605,7 @@ var Component = function () {
     /**
      * Stops this Component and all of its children.<br>
      *
-     * Stopped Components do not render. Once this Component 
+     * Stopped Components do not render. Once this Component
      */
 
   }, {
@@ -654,7 +654,7 @@ var Component = function () {
      *
      * Listeners added to elements controlled by this Component should be added
      * via this method, not directly to the HTML elements, because they can be
-     * removed during re-render. Listeners added with this method are always 
+     * removed during re-render. Listeners added with this method are always
      * restored to the elements matching the selector query after rendering.
      *
      * @param {String} eventType The event type to be added to the elements.
@@ -745,7 +745,7 @@ var Component = function () {
         var correctedHtmlContents = htmlContents;
         // construct the new tree given by the render function
         // fix: for roots starting with TR, TD or TH, they cannot be direct
-        // childs of div, they must be inside of a table to parse them with 
+        // childs of div, they must be inside of a table to parse them with
         // innerHTML
         if (htmlContents.match(/^<tr .*/i) !== null) {
           // trees starting with TR
@@ -764,9 +764,6 @@ var Component = function () {
             newTree.appendChild(node.firstChild.firstChild.firstChild);
           } else {
             newTree.appendChild(node);
-          }
-          if (newTree.childNodes.length > 1) {
-            throw 'Rendering function MUST return a tree with a single root element ' + newTree.innerHTML;
           }
 
           callback(newTree.firstChild);
@@ -940,16 +937,16 @@ var Component = function () {
     }
 
     /**
-     * Called when the parent ir rendered. This method does nothing. It is 
+     * Called when the parent ir rendered. This method does nothing. It is
      * intended to be overriden
-     * 
+     *
      */
 
   }, {
     key: 'updateChildComponent',
     value: function updateChildComponent(className, node, nodeId) {}
 
-    /* 
+    /*
      * Instantiates and indexes a new child component dynamically.
      */
 
@@ -1022,6 +1019,9 @@ Component.ParsingService = function () {
     value: function parse(htmlContents, callback) {
       var elem = document.createElement('div');
       elem.innerHTML = htmlContents;
+      if (elem.childNodes.length > 1) {
+        throw 'Rendering function MUST return a tree with a single root element ' + elem.innerHTML;
+      }
       callback(elem.firstChild);
     }
   }]);
@@ -1060,6 +1060,9 @@ Component.BufferedParsingService = function (_Component$ParsingSer) {
       if (this.callbacks.length > 0) {
         this.parsedTree = document.createElement('div');
         this.parsedTree.innerHTML = this.currentHTML;
+        if (this.parsedTree.firstChild.childNodes.length > 1) {
+          throw 'Rendering function MUST return a tree with a single root element ' + this.parsedTree.firstChild.innerHTML;
+        }
 
         for (var i = 0; i < this.callbacks.length; i++) {
           var callback = this.callbacks[i];
@@ -1105,7 +1108,7 @@ var TreeComparator = function () {
     /**
      * Compute the difference between two DOM trees, giving their root nodes.<br>
      *
-     * The resulting object is a <em>patch</em> object that can be used to 
+     * The resulting object is a <em>patch</em> object that can be used to
      * keep the first given tree equivalent to the second given tree.<br>
      *
      * An optional function can be provided to control how different subtrees are
@@ -1247,7 +1250,7 @@ var TreeComparator = function () {
                 child1pos++;
                 child2pos++;
               } else if (node1Keys[key2] === undefined) {
-                // if a key element in the new result is missing in the current tree, but the 
+                // if a key element in the new result is missing in the current tree, but the
                 // element in the new result is also present, we insert the new element maintaining
                 // the current element we are comparing against
                 result.push({
@@ -1482,7 +1485,7 @@ TreeComparator.COMPARE_POLICY_ATTRIBUTES = 3;
 /**
  * A Model is a general-purpose, observable object, holding user specific data.
  *
- *  The object can receive <em>observer functions</em> (via 
+ *  The object can receive <em>observer functions</em> (via
  * {@link Model#addObserver|addObserver()} function), which will be notified
  *  when the {@link Model#set|set( callback )} method of this object is called.
  *
@@ -1513,15 +1516,15 @@ var Model = function () {
 
   /**
    * Method to update the this Model.<br>
-   * A callback function is passed which is, typically, in charge to make changes 
+   * A callback function is passed which is, typically, in charge to make changes
    * in this object. When this callback returns, observers of this Model are
    * notified.
    * @example
    *  Model m = new Model('mymodel');
    *  m.set( () => { m.itemName='Tablet'; m.price=1200});
-   * 
-   * @param {Function} update The callback function in charge of changing this 
-   *        Model. The function will receive the reference to this Model as 
+   *
+   * @param {Function} update The callback function in charge of changing this
+   *        Model. The function will receive the reference to this Model as
    *        parameter.
    * @param {Object} [hint] Any additional object to be passed to
    *         {@link Model#observers|observers} during notification.
@@ -1552,7 +1555,7 @@ var Model = function () {
 
     /**
      * Adds an observer function to this Model.<br>
-     * 
+     *
      * @param {Function} observer The observer to add.
      * @see {@link Model#observers}
      */
@@ -1585,7 +1588,7 @@ var Model = function () {
   return Model;
 }();
 
-/** 
+/**
  * Class representing a model-based Component.<br>
  *
  * A ModelComponent is a Component which <em>auto-renders</em> itself when a
@@ -1631,7 +1634,7 @@ var ModelComponent = function (_Component) {
    * @param {Function} modelRenderer A renderer function which accepts a
    * {@link Model} as argument.
    * @param {Model} model The default model. You can add more models with {@link ModelComponent#addModel}.
-   * @param {String} htmlNodeId The id of the HTML element where this Component should 
+   * @param {String} htmlNodeId The id of the HTML element where this Component should
    *                              render to.
    * @param {Array.<String>} [childTags] An optional Array of strings of custom-tags for dynamically created child Components.
    */
@@ -1661,7 +1664,7 @@ var ModelComponent = function (_Component) {
    * <p>ModelComponents can have more than one model. The model passed in the
    * constructor is the 'default' model. Additional models must have a name.
    * When the modelRenderer function is called, the passed object to the function
-   * will contain the 'default' model itself and all the additional models under 
+   * will contain the 'default' model itself and all the additional models under
    * their respective names. For example, a code like:</p>
    * <pre><code>
    * var myModel = new Fronty.Model();
@@ -1773,10 +1776,10 @@ var ModelComponent = function (_Component) {
       return context;
     }
 
-    /** 
+    /**
      * Overrides the child Component creation by also considering a "model"
      * attribute in the tag.<br>
-     * The model attribute is used as a path inside the model object and calls 
+     * The model attribute is used as a path inside the model object and calls
      * {@link ModelComponent#createChildModelComponent}.
      * @example
      * <!-- How to add a model attribute in the HTML child tag -->
@@ -1870,8 +1873,8 @@ var ModelComponent = function (_Component) {
 
 /**
  *  Class representing a router component.<br>
- *  
- *  A router is reponsible of parsing the current browser location 
+ *
+ *  A router is reponsible of parsing the current browser location
  *  mapping its current hash to "pages". Each time the location is
  *  changed, the router tries to replace the inner HTML in a given html node id
  *  element.Pages are:
@@ -1888,13 +1891,13 @@ var ModelComponent = function (_Component) {
  * @example
  * var router = new RouterComponent(
  *      // id of the HTML element where router renders.
- *      'router', 
+ *      'router',
  *      //HTML of the router.
- *      () => "<div id='router'><div id='maincontent'></div></div>", 
+ *      () => "<div id='router'><div id='maincontent'></div></div>",
  *      // id inside the router where the current page component renders.
- *      'maincontent'); 
+ *      'maincontent');
  * router.setRouterConfig(
- * {    
+ * {
  *    login: { //rendered on http://<host>/<page>.html#login
  *      component: new LoginComponent(), // LoginComponent is a Component
  *      title: 'Login'
@@ -1913,7 +1916,7 @@ var RouterComponent = function (_ModelComponent) {
 
   /**
    * Creates a new router.<br>
-   * 
+   *
    * @param {String} rootHtmlId The HTML element id where the router renders.
    * @param {Function} modelRenderer the model renderer function
    * @param {String} routeContentsHtmlId The HTML element id where the different views of the router are placed
@@ -1953,7 +1956,7 @@ var RouterComponent = function (_ModelComponent) {
   }
 
   /**
-   * This function overrides the {@link ModelComponent#update}, by also 
+   * This function overrides the {@link ModelComponent#update}, by also
    * checking if the model being changed is this RouterComponent's model. In
    * such a case, the RouterComponent goes to the page the model indicates.
    *
@@ -1976,10 +1979,10 @@ var RouterComponent = function (_ModelComponent) {
      *
      * @param {Object.<String, {component: Component, title: String}>}
      * routerConfig Mapping of URL hashes to pages.
-     * 
+     *
      * @example
      * router.setRouterConfig(
-     * {    
+     * {
      *    login: { //rendered on http://<host>/<page>.html#login
      *      component: new LoginComponent(), // LoginComponent is a Component
      *      title: 'Login'
@@ -2002,7 +2005,7 @@ var RouterComponent = function (_ModelComponent) {
     }
 
     /**
-     * Displays to an specified page. Pages are defined in 
+     * Displays to an specified page. Pages are defined in
      * {@link RouterComponent#setRouterConfig}
      *
      * @param {String} route The route to go. Example: 'login'
@@ -2028,7 +2031,7 @@ var RouterComponent = function (_ModelComponent) {
     /**
      * Gets this the model of this router.<br>
      *
-     * The router contains an internal model where the current page is stored 
+     * The router contains an internal model where the current page is stored
      * (among those models provided in the constructor). You can obtain this
      * internal model by calling this function.
      *
