@@ -268,11 +268,8 @@ to create child components dynamically, and pass the
 model that the expression found in the attribute `model` evaluates to.
 
 If you want to instantiate the child components by hand, you can override the
-`createChildComponent(childTag, modelItem, itemId)` function in the parent
+`createChildModelComponent(className, element, id, modelItem)` function in the parent
 component. For example:
-
-**Note:** If you use a module system for JavaScript, Fronty will not be able to locate your class,
-so it is mandatory to override the method like in this example.
 
 ```javascript
 class TodoListComponent extends Fronty.Component {
@@ -280,10 +277,10 @@ class TodoListComponent extends Fronty.Component {
     super(
       Handlebars.compile(document.getElementById('todo-list-template').innerHTML),
       items, id);
-  
+
   }
-  createModelChildModelComponent(childTag, childTagElement, itemId, modelItem) {
-    if (childTag === 'TodoItemComponent') {
+  createChildModelComponent(className, element, id, modelItem) {
+    if (className === 'TodoItemComponent') {
       return new TodoItemComponent(itemId, modelItem);
     }
   }
@@ -291,6 +288,10 @@ class TodoListComponent extends Fronty.Component {
 ```
 
 See an example in [here](examples/todo-list.html).
+
+**Note:** If you use a module system for JavaScript, Fronty will not be able to locate your class,
+so it is mandatory to override the method like in this example.
+
 
 ## Technical details
 - One-way binding. Changes in models are reflected in HTML, but changes in 
