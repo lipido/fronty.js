@@ -25,7 +25,7 @@ module.exports = function(grunt) {
     },
     watch: {
       files: ['src/**/*.js', 'test/**/*.js', 'karma.conf.js'],
-      tasks: ['jshint', 'babel', 'webpack', 'test']
+      tasks: ['jshint', 'babel', 'webpack', 'test', 'doc']
     },
     babel: {
       options: {

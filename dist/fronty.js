@@ -116,7 +116,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  *      dynamically by <em>this</em> Component via
  *      "fronty-component" attribute or via custom tag elements
  *      (See {@link Component#createChildComponent} and {@link Component#childTags}).</li>
- *    <li>Manage event listeners, restoring them each re-rendering.</li>
+ *    <li>Manage event listeners, by placing a global listener at the root of
+ *    <em>this</em> component's root element, which redirects events on inner
+ *    targets to the proper listener.</li>
  *  </ul>
  *  <p>Components render when you call {@link Component#start|start()},
  * and update each time you call the {@link Component#render|render()}
@@ -431,15 +433,14 @@ var Component = function () {
      * <li>Calculate the differences between the previous "virtual" DOM of this Component
      * and the new "virtual" DOM provided by the renderer function, skipping those
      * elements where child nodes are rendering.</li>
-     * <li>Patch the real DOM with the previously computed differences.</li>
      * <li>Patch the previous "virtual" DOM with the previously computed differences,
      * and save it as the next previous "virtual" DOM.</li>
+     * <li>Patch the real DOM with the previously computed differences.</li>
      * <li>Restore the child Components in their new places if they where moved to another
      * part in the DOM.</li>
-     * <li>Restore event listeners in their corresponding elements, because
-     * some could be moved to another place in the DOM.</li>
      * <li>Create child nodes if new elements with tag name in
-     * {@link Component#childTags} are found in the HTML.</li>
+     * {@link Component#childTags} or with <code>fronty-component</code> attribute 
+     * are found in the HTML.</li>
      * </ol>
      */
 

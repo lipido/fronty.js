@@ -31,7 +31,7 @@
   author: lipido
 */
 
-/** 
+/**
  *  Class representing a component, which is an object whose responsibilities
  *  are:
  *  &lt;ul>
@@ -42,12 +42,14 @@
  *      render in an element inside this component. When &lt;em>this&lt;/em> Component
  *      re-renders, it restores its child's subtrees on their places. Child Components
  *      can be added manually (See {@link Component#addChildComponent}) or created
- *      dynamically by &lt;em>this&lt;/em> Component via 
- *      "fronty-component" attribute or via custom tag elements 
+ *      dynamically by &lt;em>this&lt;/em> Component via
+ *      "fronty-component" attribute or via custom tag elements
  *      (See {@link Component#createChildComponent} and {@link Component#childTags}).&lt;/li>
- *    &lt;li>Manage event listeners, restoring them each re-rendering.&lt;/li>
+ *    &lt;li>Manage event listeners, by placing a global listener at the root of
+ *    &lt;em>this&lt;/em> component's root element, which redirects events on inner
+ *    targets to the proper listener.&lt;/li>
  *  &lt;/ul>
- *  &lt;p>Components render when you call {@link Component#start|start()}, 
+ *  &lt;p>Components render when you call {@link Component#start|start()},
  * and update each time you call the {@link Component#render|render()}
  * function.&lt;/p>
  *
@@ -66,7 +68,7 @@
  *  );
  * component.start(); // first render
  * setInterval(() => {
- *    counter++; 
+ *    counter++;
  *    component.render(); // component re-render
  * }, 1000);
  */
@@ -78,10 +80,10 @@ class Component {
    *
    * @constructor
    * @param {Function} renderer A non-parameter function that returns HTML.
-   * @param {String} htmlNodeId The id of the HTML element where this Component should 
+   * @param {String} htmlNodeId The id of the HTML element where this Component should
    *                              render to.
    * @param {Array.&lt;String>} [childTags] An optional Array of strings of custom-tags for
-   *                         dynamically created child Components 
+   *                         dynamically created child Components
    *                        (See {@link Component#createChildComponent}).
    */
   constructor(renderer, htmlNodeId, childTags) {
@@ -124,7 +126,7 @@ class Component {
     // do not render until the component is started with start()
     /**
      * Whether this Component is stopped.&lt;br>
-     * 
+     *
      * Stopped Components do not render.
      *
      * @name Component#stopped
@@ -134,7 +136,7 @@ class Component {
     this.stopped = true;
 
     /**
-     * The event listeners that this Component is managing. 
+     * The event listeners that this Component is managing.
      * See {@link Component#addEventListener|addEventListener()}.
      *
      * @name Component#eventListeners
@@ -166,7 +168,7 @@ class Component {
     // The DOM tree of this component as it was in the previous render.
     // We will not compare the new rendered trees coming from the renderer function
     // to the real DOM. Why? We want that third-party libraries could do some changes
-    // in the real DOM so, if it is not necessary, we will try not to overwrite their 
+    // in the real DOM so, if it is not necessary, we will try not to overwrite their
     // changes. To achieve this, we keep a "virtual DOM" that may not be
     // exactly the real DOM, so we only change things that are under our control,
     // things that we added in the previous render.
@@ -221,7 +223,7 @@ class Component {
    * &lt;p>The HTML element where the child Component will render will not be re-rendered
    * when &lt;em>this&lt;/em> Component (the parent) is re-rendered.&lt;/p>
    *
-   * &lt;p>The child component will be started (and thus immediately rendered) or stopped 
+   * &lt;p>The child component will be started (and thus immediately rendered) or stopped
    * if this Component is currently started or stopped, respectively.&lt;/p>
    *
    * @param {Component} component The child Component.
@@ -242,7 +244,7 @@ class Component {
    * given HTML element. This method is intended to be overrided
    * by subclasses.
    *
-   * &lt;p>Parent components define where to create new children via their rendered 
+   * &lt;p>Parent components define where to create new children via their rendered
    * HTML in two ways:
    * &lt;ul>
    * &lt;li>Via &lt;code>fronty-component&lt;/code> attribute. An element like
@@ -260,10 +262,10 @@ class Component {
    * &lt;/ul>&lt;/p>
    * &lt;p>Everytime a new element indicating that a child should be created, this
    * method is called to create the real instance.&lt;/p>
-   * 
+   *
    * &lt;p>&lt;b>Note:&lt;/b> By default, this function uses &lt;code>eval(''+className)&lt;/code>
    * to create the instance. If you are packing your application and this library
-   * in different modules, eval may fail in finding the className. You must 
+   * in different modules, eval may fail in finding the className. You must
    * override the method to create the child.&lt;/p>
    *
    * @param {String} className The class name found in the HTML element
@@ -330,21 +332,19 @@ class Component {
   /**
    * Render this Component, which consists in:
    * &lt;ol>
-   * &lt;li>Save the child Component DOM trees, because they may be moved to another place in the DOM.&lt;/li>
    * &lt;li>Call the {@link Component#renderer|renderer function}.&lt;/li>
    * &lt;li>Calculate the differences between the previous "virtual" DOM of this Component
    * and the new "virtual" DOM provided by the renderer function, skipping those
    * elements where child nodes are rendering.&lt;/li>
-   * &lt;li>Patch the real DOM with the previously computed differences.&lt;/li>
    * &lt;li>Patch the previous "virtual" DOM with the previously computed differences,
    * and save it as the next previous "virtual" DOM.&lt;/li>
+   * &lt;li>Patch the real DOM with the previously computed differences.&lt;/li>
    * &lt;li>Restore the child Components in their new places if they where moved to another
    * part in the DOM.&lt;/li>
-   * &lt;li>Restore event listeners in their corresponding elements, because 
-   * some could be moved to another place in the DOM.&lt;/li>
    * &lt;li>Create child nodes if new elements with tag name in
-   * {@link Component#childTags} are found in the HTML.&lt;/li>
-   * &lt;/ol> 
+   * {@link Component#childTags} or with &lt;code>fronty-component&lt;/code> attribute 
+   * are found in the HTML.&lt;/li>
+   * &lt;/ol>
    */
   render() {
 
@@ -406,8 +406,6 @@ class Component {
 
 
         // Apply patches to the REAL DOM
-        // first, save child component subtrees
-        var savedChildNodes = this._saveChildNodes();
 
         TreeComparator.applyPatches(patches, (patch) => {
 
@@ -426,7 +424,7 @@ class Component {
 
           // toReplace will be the real DOM node. In our virtual DOM, each node
           // has a reference to the real DOM node (see the next few lines).
-          patch.toReplace = this._resolveRealNode(patch.toReplace, savedChildNodes);
+          patch.toReplace = this._resolveRealNode(patch.toReplace);
 
           if (patch.mode === TreeComparator.PATCH_INSERT_NODE ||
             patch.mode === TreeComparator.PATCH_APPEND_CHILD ||
@@ -440,13 +438,13 @@ class Component {
           } else if (patch.mode === TreeComparator.PATCH_SWAP_NODES) {
             // in swap-nodes mode, both are nodes to be found in the real DOM,
             // so we search for the replacement in the real DOM
-            patch.replacement = this._resolveRealNode(patch.replacement, savedChildNodes);
+            patch.replacement = this._resolveRealNode(patch.replacement);
           }
 
           return patch;
         });
         // restore child component subtrees
-        this._restoreChildNodes(savedChildNodes);
+        this._restoreChildNodes();
 
         // create all children that may have appeared in the form of
         // custom tag HTML elements, or elements with the "fronty-component"
@@ -507,7 +505,7 @@ class Component {
   /**
    * Stops this Component and all of its children.&lt;br>
    *
-   * Stopped Components do not render. Once this Component 
+   * Stopped Components do not render. Once this Component
    */
   stop() {
     if (this.stopped === false) {
@@ -550,7 +548,7 @@ class Component {
    *
    * Listeners added to elements controlled by this Component should be added
    * via this method, not directly to the HTML elements, because they can be
-   * removed during re-render. Listeners added with this method are always 
+   * removed during re-render. Listeners added with this method are always
    * restored to the elements matching the selector query after rendering.
    *
    * @param {String} eventType The event type to be added to the elements.
@@ -623,7 +621,7 @@ class Component {
       var correctedHtmlContents = htmlContents;
       // construct the new tree given by the render function
       // fix: for roots starting with TR, TD or TH, they cannot be direct
-      // childs of div, they must be inside of a table to parse them with 
+      // childs of div, they must be inside of a table to parse them with
       // innerHTML
       if (htmlContents.match(/^&lt;tr .*/i) !== null) {
         // trees starting with TR
@@ -643,9 +641,6 @@ class Component {
         } else {
           newTree.appendChild(node);
         }
-        if (newTree.childNodes.length > 1) {
-          throw 'Rendering function MUST return a tree with a single root element ' + newTree.innerHTML;
-        }
 
         callback(newTree.firstChild);
       });
@@ -656,14 +651,13 @@ class Component {
     }
   }
 
-  _resolveRealNode(node, savedChildNodes) {
-
-    // if the node has an id of a child node, we find it in the savedChildNodes, since the
-    // "realNode" pointer does not references the real node, since the
-    // child components have replaced it by their root node.
+  _resolveRealNode(node) {
+    // if the node has an id of a child node, we find it the *child* previous real DOM,
+    // since the"realNode" pointer does not references the real node, because it has
+    // been replaced by the child root node.
     if (node.id !== undefined &amp;&amp; this.childComponentIds[node.id] !== undefined) {
       //return document.getElementById(node.id);
-      return savedChildNodes[node.id];
+      return this.childComponentIds[node.id]._getPreviousRealRootNode();
     }
 
     // use the reference from the node to its corresponding clone in the real DOM
@@ -687,36 +681,31 @@ class Component {
   /*
    * Restores the child subtrees in their corresponding slots.
    */
-  _restoreChildNodes(savedChildNodes) {
-    //let savedChilds = Object.keys(savedChildNodes).length;
+  _restoreChildNodes() {
+
     for (let i = 0; i &lt; this.childComponents.length; i++) {
       var childComponent = this.childComponents[i];
       var childId = childComponent.getHtmlNodeId();
-      if (this._getChildNode(childId) !== null &amp;&amp; savedChildNodes[childId] !== undefined) {
-        var currentComponentNode = this._getChildNode(childId);
-        if (savedChildNodes[childId] != currentComponentNode) {
-          currentComponentNode.parentNode.replaceChild(savedChildNodes[childId], currentComponentNode);
-        }
-        //childComponent.afterParentRender();
-      }
 
+      if (this._getChildNode(childId) !== null) {
+        let currentComponentNode = this._getChildNode(childId);
+        if (childComponent._getPreviousRealRootNode() !== null &amp;&amp;
+            childComponent._getPreviousRealRootNode() !== currentComponentNode) {
+
+          currentComponentNode.parentNode.replaceChild(
+            childComponent._getPreviousRealRootNode(),
+            currentComponentNode);
+        }
+      }
     }
   }
 
   /*
-   * Creates and returns an index of child node ids to their current DOM element.
+   * Gets the root node in the real dom where this component previously rendered.
+   *
    */
-  _saveChildNodes() {
-    var savedChildNodes = {};
-    for (let i = 0; i &lt; this.childComponents.length; i++) {
-      var childComponent = this.childComponents[i];
-      var childId = childComponent.getHtmlNodeId();
-      if (this._getChildNode(childId) !== null) {
-        savedChildNodes[childId] = this._getChildNode(childId);
-      }
-    }
-
-    return savedChildNodes;
+  _getPreviousRealRootNode() {
+    return this._previousVirtualDOM !== null? this._previousVirtualDOM.firstChild.realNode: null;
   }
 
   _getComponentNode() {
@@ -807,15 +796,15 @@ class Component {
   }
 
   /**
-   * Called when the parent ir rendered. This method does nothing. It is 
+   * Called when the parent ir rendered. This method does nothing. It is
    * intended to be overriden
-   * 
+   *
    */
   updateChildComponent(className, node, nodeId) {
 
   }
 
-  /* 
+  /*
    * Instantiates and indexes a new child component dynamically.
    */
   _createAndAddChildComponent(className, element, id, parsingService) {
@@ -839,7 +828,12 @@ class Component {
   _eventsListener(event) {
     for (let i = 0; i &lt; this.eventListeners.length; i++) {
       let listener = this.eventListeners[i];
-      if (event.target.matches(listener.query) &amp;&amp; listener.eventType === event.type) {
+      if (
+        (   //the target matches exactly with the query
+            event.target.matches(listener.query) ||
+            //the target is a child node of the query
+            event.target.matches(listener.query+" *")
+        ) &amp;&amp; listener.eventType === event.type) {
         event.preventDefault();
         listener.callback(event);
         return;
@@ -866,6 +860,9 @@ Component.ParsingService = class ParsingService {
   parse(htmlContents, callback) {
     var elem = document.createElement('div');
     elem.innerHTML = htmlContents;
+    if (elem.childNodes.length > 1) {
+      throw 'Rendering function MUST return a tree with a single root element ' + elem.innerHTML;
+    }
     callback(elem.firstChild);
   }
 };
@@ -892,6 +889,9 @@ Component.BufferedParsingService = class BufferedParsingService extends Componen
     if (this.callbacks.length > 0) {
       this.parsedTree = document.createElement('div');
       this.parsedTree.innerHTML = this.currentHTML;
+      if (this.parsedTree.firstChild.childNodes.length > 1) {
+        throw 'Rendering function MUST return a tree with a single root element ' + this.parsedTree.firstChild.innerHTML;
+      }
 
       for (let i = 0; i &lt; this.callbacks.length; i++) {
         var callback = this.callbacks[i];
@@ -925,7 +925,7 @@ class TreeComparator {
   /**
    * Compute the difference between two DOM trees, giving their root nodes.&lt;br>
    *
-   * The resulting object is a &lt;em>patch&lt;/em> object that can be used to 
+   * The resulting object is a &lt;em>patch&lt;/em> object that can be used to
    * keep the first given tree equivalent to the second given tree.&lt;br>
    *
    * An optional function can be provided to control how different subtrees are
@@ -1072,7 +1072,7 @@ class TreeComparator {
               child1pos++;
               child2pos++;
             } else if (node1Keys[key2] === undefined) {
-              // if a key element in the new result is missing in the current tree, but the 
+              // if a key element in the new result is missing in the current tree, but the
               // element in the new result is also present, we insert the new element maintaining
               // the current element we are comparing against
               result.push({
@@ -1309,7 +1309,7 @@ TreeComparator.COMPARE_POLICY_ATTRIBUTES = 3;
 /**
  * A Model is a general-purpose, observable object, holding user specific data.
  *
- *  The object can receive &lt;em>observer functions&lt;/em> (via 
+ *  The object can receive &lt;em>observer functions&lt;/em> (via
  * {@link Model#addObserver|addObserver()} function), which will be notified
  *  when the {@link Model#set|set( callback )} method of this object is called.
  *
@@ -1337,15 +1337,15 @@ class Model {
 
   /**
    * Method to update the this Model.&lt;br>
-   * A callback function is passed which is, typically, in charge to make changes 
+   * A callback function is passed which is, typically, in charge to make changes
    * in this object. When this callback returns, observers of this Model are
    * notified.
    * @example
    *  Model m = new Model('mymodel');
    *  m.set( () => { m.itemName='Tablet'; m.price=1200});
-   * 
-   * @param {Function} update The callback function in charge of changing this 
-   *        Model. The function will receive the reference to this Model as 
+   *
+   * @param {Function} update The callback function in charge of changing this
+   *        Model. The function will receive the reference to this Model as
    *        parameter.
    * @param {Object} [hint] Any additional object to be passed to
    *         {@link Model#observers|observers} during notification.
@@ -1369,7 +1369,7 @@ class Model {
 
   /**
    * Adds an observer function to this Model.&lt;br>
-   * 
+   *
    * @param {Function} observer The observer to add.
    * @see {@link Model#observers}
    */
@@ -1394,7 +1394,7 @@ class Model {
 }
 
 
-/** 
+/**
  * Class representing a model-based Component.&lt;br>
  *
  * A ModelComponent is a Component which &lt;em>auto-renders&lt;/em> itself when a
@@ -1437,7 +1437,7 @@ class ModelComponent extends Component {
    * @param {Function} modelRenderer A renderer function which accepts a
    * {@link Model} as argument.
    * @param {Model} model The default model. You can add more models with {@link ModelComponent#addModel}.
-   * @param {String} htmlNodeId The id of the HTML element where this Component should 
+   * @param {String} htmlNodeId The id of the HTML element where this Component should
    *                              render to.
    * @param {Array.&lt;String>} [childTags] An optional Array of strings of custom-tags for dynamically created child Components.
    */
@@ -1466,7 +1466,7 @@ class ModelComponent extends Component {
    * &lt;p>ModelComponents can have more than one model. The model passed in the
    * constructor is the 'default' model. Additional models must have a name.
    * When the modelRenderer function is called, the passed object to the function
-   * will contain the 'default' model itself and all the additional models under 
+   * will contain the 'default' model itself and all the additional models under
    * their respective names. For example, a code like:&lt;/p>
    * &lt;pre>&lt;code>
    * var myModel = new Fronty.Model();
@@ -1563,10 +1563,10 @@ class ModelComponent extends Component {
 
 
 
-  /** 
+  /**
    * Overrides the child Component creation by also considering a "model"
    * attribute in the tag.&lt;br>
-   * The model attribute is used as a path inside the model object and calls 
+   * The model attribute is used as a path inside the model object and calls
    * {@link ModelComponent#createChildModelComponent}.
    * @example
    * &lt;!-- How to add a model attribute in the HTML child tag -->
@@ -1649,8 +1649,8 @@ class ModelComponent extends Component {
 
 /**
  *  Class representing a router component.&lt;br>
- *  
- *  A router is reponsible of parsing the current browser location 
+ *
+ *  A router is reponsible of parsing the current browser location
  *  mapping its current hash to "pages". Each time the location is
  *  changed, the router tries to replace the inner HTML in a given html node id
  *  element.Pages are:
@@ -1667,13 +1667,13 @@ class ModelComponent extends Component {
  * @example
  * var router = new RouterComponent(
  *      // id of the HTML element where router renders.
- *      'router', 
+ *      'router',
  *      //HTML of the router.
- *      () => "&lt;div id='router'>&lt;div id='maincontent'>&lt;/div>&lt;/div>", 
+ *      () => "&lt;div id='router'>&lt;div id='maincontent'>&lt;/div>&lt;/div>",
  *      // id inside the router where the current page component renders.
- *      'maincontent'); 
+ *      'maincontent');
  * router.setRouterConfig(
- * {    
+ * {
  *    login: { //rendered on http://&lt;host>/&lt;page>.html#login
  *      component: new LoginComponent(), // LoginComponent is a Component
  *      title: 'Login'
@@ -1689,7 +1689,7 @@ class RouterComponent extends ModelComponent {
 
   /**
    * Creates a new router.&lt;br>
-   * 
+   *
    * @param {String} rootHtmlId The HTML element id where the router renders.
    * @param {Function} modelRenderer the model renderer function
    * @param {String} routeContentsHtmlId The HTML element id where the different views of the router are placed
@@ -1728,7 +1728,7 @@ class RouterComponent extends ModelComponent {
   }
 
   /**
-   * This function overrides the {@link ModelComponent#update}, by also 
+   * This function overrides the {@link ModelComponent#update}, by also
    * checking if the model being changed is this RouterComponent's model. In
    * such a case, the RouterComponent goes to the page the model indicates.
    *
@@ -1747,10 +1747,10 @@ class RouterComponent extends ModelComponent {
    *
    * @param {Object.&lt;String, {component: Component, title: String}>}
    * routerConfig Mapping of URL hashes to pages.
-   * 
+   *
    * @example
    * router.setRouterConfig(
-   * {    
+   * {
    *    login: { //rendered on http://&lt;host>/&lt;page>.html#login
    *      component: new LoginComponent(), // LoginComponent is a Component
    *      title: 'Login'
@@ -1769,7 +1769,7 @@ class RouterComponent extends ModelComponent {
   }
 
   /**
-   * Displays to an specified page. Pages are defined in 
+   * Displays to an specified page. Pages are defined in
    * {@link RouterComponent#setRouterConfig}
    *
    * @param {String} route The route to go. Example: 'login'
@@ -1789,7 +1789,7 @@ class RouterComponent extends ModelComponent {
   /**
    * Gets this the model of this router.&lt;br>
    *
-   * The router contains an internal model where the current page is stored 
+   * The router contains an internal model where the current page is stored
    * (among those models provided in the constructor). You can obtain this
    * internal model by calling this function.
    *
@@ -1885,7 +1885,7 @@ export {
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Mon Nov 06 2017 13:55:17 GMT+0100 (CET)
+    Documentation generated by <a href="https://github.com/jsdoc3/jsdoc">JSDoc 3.4.3</a> on Mon Feb 12 2018 11:59:04 GMT+0100 (CET)
 </footer>
 
 <script> prettyPrint(); </script>
