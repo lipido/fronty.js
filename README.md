@@ -2,7 +2,7 @@
 
 A simple library for building Component-based Web user interfaces.
 
-**Note: This is an educational project (<1000 lines of code). There are
+**Note: This is an educational project (~1000 lines of code). There are
 many libraries doing this for professional projects (e.g:
 [Ember](http://emberjs.com), [AngularJS](http://angularjs.org),
 [Vue.js](https://vuejs.org), [React](https://facebook.github.io/react/), etc.)**
@@ -33,7 +33,7 @@ myModel.set( () => myModel.counter++ );
 Renderers allows you to maintain your HTML separated from your JavaScript code.
 A renderer is any function that returns an HTML string.
 
-A special type of renderers are those that takes a model and converts it into
+A special type of renderers are those that take a model and converts it into
 HTML (see `ModelComponent`, afterwards). A very powerful library to create this
 function is [Handlebars](http://handlebarsjs.com/), since a Handlebars template
 is a valid renderer function for fronty.js (you can [find many
@@ -50,7 +50,7 @@ If you compile this template with Handlebars, you get a valid renderer function
 that would be able to render the previous model, where `counter` is a property
 of the model.
 
-Note: renderers **MUST** return a piece of HTML with a single root element.
+**Note**: renderers MUST return a piece of HTML with a **single root element**.
 
 ### Components
 Components take a renderer function and puts its resulting HTML in the actual
