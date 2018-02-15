@@ -292,6 +292,13 @@ See an example in [here](examples/todo-list.html).
 **Note:** If you use a module system for JavaScript, Fronty will not be able to locate your class,
 so it is mandatory to override the method like in this example.
 
+## Class diagram
+The next figure shows a class diagram with the classes of the framework. For
+a complete description of the API see
+[https://lipido.github.io/fronty.js](https://lipido.github.io/fronty.js)
+
+![Fronty.js class diagram](https://lipido.github.io/fronty.js/class-diagram.png "Fronty.js class diagram")
+
 
 ## Technical details
 - One-way binding. Changes in models are reflected in HTML, but changes in 

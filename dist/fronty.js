@@ -187,7 +187,7 @@ var Component = function () {
      * function is called.
      *
      * @name Component#childTags
-     * @type String
+     * @type Array.<String>
      * @default empty array
      */
     this.childTags = childTags ? childTags : [];
@@ -1524,7 +1524,7 @@ var Model = function () {
    *  Model m = new Model('mymodel');
    *  m.set( () => { m.itemName='Tablet'; m.price=1200});
    *
-   * @param {Function} update The callback function in charge of changing this
+   * @param {Function} updater The callback function in charge of changing this
    *        Model. The function will receive the reference to this Model as
    *        parameter.
    * @param {Object} [hint] Any additional object to be passed to
@@ -1534,8 +1534,8 @@ var Model = function () {
 
   _createClass(Model, [{
     key: 'set',
-    value: function set(update, hint) {
-      update(this);
+    value: function set(updater, hint) {
+      updater(this);
       this.notifyObservers(hint);
     }
 

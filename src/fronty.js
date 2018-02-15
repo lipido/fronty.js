@@ -88,7 +88,7 @@ class Component {
      * function is called.
      *
      * @name Component#childTags
-     * @type String
+     * @type Array.<String>
      * @default empty array
      */
     this.childTags = (childTags) ? childTags : [];
@@ -1316,14 +1316,14 @@ class Model {
    *  Model m = new Model('mymodel');
    *  m.set( () => { m.itemName='Tablet'; m.price=1200});
    *
-   * @param {Function} update The callback function in charge of changing this
+   * @param {Function} updater The callback function in charge of changing this
    *        Model. The function will receive the reference to this Model as
    *        parameter.
    * @param {Object} [hint] Any additional object to be passed to
    *         {@link Model#observers|observers} during notification.
    */
-  set(update, hint) {
-    update(this);
+  set(updater, hint) {
+    updater(this);
     this.notifyObservers(hint);
   }
 

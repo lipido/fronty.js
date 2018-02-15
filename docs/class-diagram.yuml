@@ -1,0 +1,13 @@
+[Component||Component(renderer htmlNodeId childTags);;--children--;addChildComponent(component);; --rendering--;render();start();stop();;--event handling--;addEventListener(eventType nodesQuery callback);;--getters--;getChildComponent(id):Component;getChildComponents():array of Component;getChildComponentsById(): map string-component;getHtmlNodeId():String;;--hooks--;afterRender();beforeRender();onStart();onStop();; --for override--;createChildComponent(className element id)]
+
+[Model||Model(name);;addObserver(observer);removeObserver(observer);notifyObservers(hint);;--change the model--;set(updater hint)]
+[Component]<>1-*>[Component]
+
+[ModelComponent||ModelComponent(modelRenderer model htmlNodeId childTags);;addModel(modelName model);setModel(model modelName);;update(model);;--overrides--;start();stop()]
+
+[Component]^[ModelComponent]
+[ModelComponent]observer*-*observed[Model]
+
+[RouterComponent||RouterComponent(rootHtmlId modelRenderer routeContentsHtmlId model);;setRouterConfig(routerConfig);;--navigation--;goToPage(route);;--getters--;getCurrentPage():String;getRouteQueryParam(name);getRouterModel():Model;;--overrides--;update(model);onStart();]
+[ModelComponent]^[RouterComponent]
+[RouterComponent]->routerModel[Model]
