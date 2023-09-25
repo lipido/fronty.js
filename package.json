@@ -2,6 +2,7 @@
     "name": "fronty.js",
     "version": "0.1.0",
     "description": "",
+    "main": "dist/fronty.js",
     "scripts": {
         "test": "./node_modules/karma/bin/karma start karma.conf.js"
     },
@@ -14,6 +15,7 @@
         "grunt-contrib-watch": "^1.0.0",
         "grunt-jsdoc": "^2.1.0",
         "grunt-karma": "^2.0.0",
+        "grunt-ts": "^6.0.0-beta.22",
         "grunt-webpack": "^2.0.1",
         "jasmine-core": "^2.2.0",
         "jsdoc": "^3.4.3",
