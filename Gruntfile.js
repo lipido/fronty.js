@@ -58,6 +58,17 @@ module.exports = function(grunt) {
           'dist/fronty.min.js': ['dist/fronty.js']
         }
       }
+    },
+
+    ts: {
+      default: {
+        src: ["src/fronty.js"],
+        options: {
+          comments: true,
+          fast: 'never',
+          additionalFlags: '--declaration --allowJs --emitDeclarationOnly --declarationMap --rootDir src --outDir dist'
+        }
+      }
     }
 
   });
@@ -69,12 +80,12 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-babel');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-webpack');
-
+  grunt.loadNpmTasks("grunt-ts");
 
   grunt.registerTask('test', ['karma']);
   grunt.registerTask('dev', ['watch']);
   grunt.registerTask('doc', ['jsdoc']);
 
   // Default task(s).
-  grunt.registerTask('default', ['jshint', 'babel', 'webpack', 'test', 'uglify']);
+  grunt.registerTask('default', ['jshint', 'babel', 'webpack', 'test', 'uglify', 'ts']);
 };
